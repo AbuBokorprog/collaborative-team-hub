@@ -1,5 +1,9 @@
+import { cn } from "@/lib/utils";
+
 export function Modal({ open, onClose, title, children, footer, size = "md" }) {
-  if (!open) return null;
+  if (!open) {
+    return null;
+  }
   const sizes = {
     sm: "max-w-md",
     md: "max-w-lg",

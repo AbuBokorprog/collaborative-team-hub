@@ -348,7 +348,7 @@ export const useAppStore = create(
       moveTask: (taskId, fromCol, toCol) => {
         const tasks = get().tasks;
         const task = tasks[fromCol].find((t) => t.id === taskId);
-        if (!task) return;
+        if (!task) {return;}
         set({
           tasks: {
             ...tasks,

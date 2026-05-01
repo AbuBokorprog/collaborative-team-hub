@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
 
 const PLANS = [
   {
@@ -219,7 +219,7 @@ export default function PricingSection() {
             </span>
             <button
               onClick={() => setAnnual(!annual)}
-              className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${annual ? "bg-violet-600" : "bg-white/10"}`}
+              className={`relative cursor-pointer w-12 h-6 rounded-full transition-colors duration-200 ${annual ? "bg-violet-600" : "bg-white/10 "}`}
             >
               <div
                 className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${annual ? "left-7" : "left-1"}`}

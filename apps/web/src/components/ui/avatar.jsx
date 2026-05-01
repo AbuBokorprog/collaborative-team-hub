@@ -1,6 +1,5 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { forwardRef } from "react";
 
 export function Avatar({ user, size = "md", showOnline, className }) {
   const sizes = {

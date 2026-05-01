@@ -1,7 +1,7 @@
 "use client";
-import { cn } from "@/lib/utils";
-import { forwardRef } from "react";
 import { Card } from "./card";
+
+import { cn } from "@/lib/utils";
 
 export function StatCard({
   title,

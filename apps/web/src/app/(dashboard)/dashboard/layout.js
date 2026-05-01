@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 import Sidebar from "@/components/common/sidebar";
-import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();

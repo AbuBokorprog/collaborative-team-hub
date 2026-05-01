@@ -1,12 +1,12 @@
 "use client";
-import { cn } from "@/lib/utils";
 import { forwardRef } from "react";
 
-export const Input = forwardRef(function Input(
+import { cn } from "@/lib/utils";
+
+export const Input = forwardRef((
   { label, icon, error, className, ...props },
   ref,
-) {
-  return (
+) => (
     <div className="space-y-1.5">
       {label && (
         <label className="text-sm font-medium text-(--text-primary)">
@@ -34,5 +34,4 @@ export const Input = forwardRef(function Input(
       </div>
       {error && <p className="text-xs text-(--danger)">{error}</p>}
     </div>
-  );
-});
+  ));

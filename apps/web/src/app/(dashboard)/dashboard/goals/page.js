@@ -1,24 +1,24 @@
 "use client";
-import { useState } from "react";
-import { useAppStore } from "@/store/useAppStore";
-import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { STATUS_CONFIG, PRIORITY_CONFIG } from "@/lib/utils";
 import {
   Plus,
   Target,
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
-  Filter,
 } from "lucide-react";
+import { useState } from "react";
+
+import Header from "@/components/common/header";
 import { Modal } from "@/components/common/modal";
-import { Input } from "@/components/ui/Input";
-import { Textarea } from "@/components/common/textArea";
 import { Select } from "@/components/common/select";
+import { Textarea } from "@/components/common/textArea";
 import { AvatarGroup } from "@/components/ui/AvatarGroup";
 import { Button } from "@/components/ui/button";
-import Header from "@/components/common/header";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/Input";
+import { Progress } from "@/components/ui/progress";
+import { STATUS_CONFIG, PRIORITY_CONFIG } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
 
 const STATUS_TABS = ["all", "on-track", "at-risk", "behind"];
 

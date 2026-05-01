@@ -1,26 +1,24 @@
 "use client";
-import { useState } from "react";
-import { useAppStore } from "@/store/useAppStore";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
-import Header from "@/components/common/header";
-import { cn } from "@/lib/utils";
 import {
   Plus,
   Settings,
-  Users,
   Crown,
   MoreHorizontal,
-  Shield,
   Mail,
   Trash2,
-  Edit2,
 } from "lucide-react";
-import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/common/select";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+
+import Header from "@/components/common/header";
 import { Modal } from "@/components/common/modal";
+import { Select } from "@/components/common/select";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/Input";
+import { cn } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
 
 const ROLES = [
   { value: "admin", label: "Admin" },

@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 export function Select({ label, options, value, onChange, className }) {
   return (
     <div className="space-y-1.5">

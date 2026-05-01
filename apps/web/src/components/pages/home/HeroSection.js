@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 
 const STATS = [
   { value: "500+", label: "Teams using it" },
@@ -164,7 +164,7 @@ export default function HeroSection() {
 
   useEffect(() => {
     const el = gradRef.current;
-    if (!el) return;
+    if (!el) {return;}
     let frame;
     let t = 0;
     const animate = () => {

@@ -1,7 +1,4 @@
 "use client";
-import { useState } from "react";
-import { useAppStore } from "@/store/useAppStore";
-import { formatDate } from "@/lib/utils";
 import {
   Plus,
   Pin,
@@ -14,11 +11,15 @@ import {
   X,
   Search,
 } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+
 import Header from "@/components/common/header";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { formatDate } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
 
 const AUDIENCES = ["All", "Engineering", "Design", "Marketing", "Leadership"];
 const EMOJI_OPTS = ["🎉", "🔥", "❤️", "👋", "💪", "👀", "🙌", "💬"];
@@ -143,7 +144,7 @@ function RichEditor({ value, onChange }) {
     },
     {
       icon: <AtSign className="w-3.5 h-3.5" />,
-      action: () => onChange(value + "@"),
+      action: () => onChange(`${value}@`),
       title: "Mention",
     },
     { icon: <Link className="w-3.5 h-3.5" />, action: () => {}, title: "Link" },
@@ -199,7 +200,7 @@ export default function AnnouncementsPage() {
   );
 
   const handlePost = () => {
-    if (!title.trim() || !content.trim()) return;
+    if (!title.trim() || !content.trim()) {return;}
     const newAnn = {
       id: `a${Date.now()}`,
       title,
@@ -220,7 +221,7 @@ export default function AnnouncementsPage() {
   const handleReact = (annId, emoji) => {
     setAnns((prev) =>
       prev.map((a) => {
-        if (a.id !== annId) return a;
+        if (a.id !== annId) {return a;}
         const reactions = { ...a.reactions };
         reactions[emoji] = (reactions[emoji] || 0) + 1;
         return { ...a, reactions };

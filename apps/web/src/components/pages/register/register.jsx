@@ -1,12 +1,14 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Check, ArrowRight, Users, Target, BarChart2 } from "lucide-react";
 import Link from "next/link";
-import { useAppStore } from "@/store/useAppStore";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils";
-import { Check, ArrowRight, Users, Target, BarChart2 } from "lucide-react";
+import { useAppStore } from "@/store/useAppStore";
+
 
 const STEPS = ["Account", "Workspace", "Team"];
 

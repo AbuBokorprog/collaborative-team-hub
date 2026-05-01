@@ -1,11 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useAppStore } from "@/store/useAppStore";
 import { Eye, EyeOff, ArrowRight, Zap } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function Login() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function Login() {
   }, [theme]);
 
   useEffect(() => {
-    if (isAuthenticated) router.push("/dashboard");
+    if (isAuthenticated) {router.push("/dashboard");}
   }, [isAuthenticated, router]);
 
   const handleSubmit = async (e) => {
@@ -30,7 +31,7 @@ export default function Login() {
     setError("");
     await new Promise((r) => setTimeout(r, 800));
     const ok = login(email, password);
-    if (ok) router.push("/dashboard");
+    if (ok) {router.push("/dashboard");}
     else {
       setError("Invalid credentials");
       setLoading(false);

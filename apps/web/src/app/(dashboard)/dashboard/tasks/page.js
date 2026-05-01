@@ -1,16 +1,4 @@
 "use client";
-import { useState } from "react";
-import { useAppStore } from "@/store/useAppStore";
-import { Modal } from "@/components/common/modal";
-import { Input } from "@/components/ui/Input";
-import { Textarea } from "@/components/common/textArea";
-import { Select } from "@/components/common/select";
-import { Avatar } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Header from "@/components/common/header";
-import { COLUMN_CONFIG, PRIORITY_CONFIG } from "@/lib/utils";
-import { cn } from "@/lib/utils";
 import {
   Plus,
   LayoutGrid,
@@ -21,6 +9,18 @@ import {
   GripVertical,
   MoreHorizontal,
 } from "lucide-react";
+import { useState } from "react";
+
+import Header from "@/components/common/header";
+import { Modal } from "@/components/common/modal";
+import { Select } from "@/components/common/select";
+import { Textarea } from "@/components/common/textArea";
+import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/Input";
+import { COLUMN_CONFIG, PRIORITY_CONFIG , cn } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
 
 const COLUMNS = ["todo", "inProgress", "review", "done"];
 const PRIORITY_OPTS = [

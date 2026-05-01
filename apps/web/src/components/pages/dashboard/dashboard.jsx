@@ -1,11 +1,12 @@
 "use client";
-import { useAppStore } from "@/store/useAppStore";
 import {
-  ANALYTICS_DATA,
-  STATUS_CONFIG,
-  PRIORITY_CONFIG,
-  formatDate,
-} from "@/lib/utils";
+  CheckSquare,
+  Target,
+  Users,
+  TrendingUp,
+  ArrowRight,
+} from "lucide-react";
+import Link from "next/link";
 import {
   AreaChart,
   Area,
@@ -15,21 +16,20 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import {
-  CheckSquare,
-  Target,
-  Users,
-  TrendingUp,
-  Clock,
-  ArrowRight,
-} from "lucide-react";
-import Link from "next/link";
-import { StatCard } from "@/components/ui/StatCard";
+
+import Header from "@/components/common/header";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
-import Header from "@/components/common/header";
+import { StatCard } from "@/components/ui/StatCard";
+import {
+  ANALYTICS_DATA,
+  STATUS_CONFIG,
+  PRIORITY_CONFIG,
+  formatDate,
+} from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload?.length) {

@@ -1,9 +1,11 @@
 "use client";
-import { useState } from "react";
-import { useAppStore } from "@/store/useAppStore";
-import { cn, formatDate } from "@/lib/utils";
 import { Bell, Search, Sun, Moon, Menu, X } from "lucide-react";
+import { useState } from "react";
+
 import { Avatar } from "../ui/avatar";
+
+import { cn } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function Header({ title, subtitle }) {
   const {

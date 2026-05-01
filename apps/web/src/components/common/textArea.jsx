@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 export function Textarea({ label, error, className, ...props }) {
   return (
     <div className="space-y-1.5">
