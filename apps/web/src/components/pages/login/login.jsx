@@ -3,6 +3,8 @@ import { Eye, EyeOff, ArrowRight, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
@@ -11,31 +13,41 @@ import { useAppStore } from "@/store/useAppStore";
 export default function Login() {
   const router = useRouter();
   const { login, isAuthenticated, theme, toggleTheme } = useAppStore();
-  const [email, setEmail] = useState("alex@teamhub.io");
-  const [password, setPassword] = useState("password123");
   const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const {
+    formState: { isSubmitting },
+    handleSubmit,
+    register,
+  } = useForm({
+    defaultValues: {
+      email: "alex@teamhub.io",
+      password: "password123",
+    },
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
   useEffect(() => {
-    if (isAuthenticated) {router.push("/dashboard");}
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
   }, [isAuthenticated, router]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleLogin = async ({ email, password }) => {
     setError("");
-    await new Promise((r) => setTimeout(r, 800));
-    const ok = login(email, password);
-    if (ok) {router.push("/dashboard");}
-    else {
-      setError("Invalid credentials");
-      setLoading(false);
+    const ok = await login(email, password);
+    if (ok) {
+      toast.success("Signed in");
+      router.push("/dashboard");
+      return;
     }
+
+    const message = useAppStore.getState().authError || "Invalid credentials";
+    setError(message);
+    toast.error(message);
   };
 
   return (
@@ -107,8 +119,8 @@ export default function Login() {
         {/* Testimonial */}
         <div className="relative z-10 bg-white/5 rounded-2xl p-5 border border-white/10">
           <p className="text-sm text-white/70 italic leading-relaxed">
-            "Team Hub transformed how we work. Our productivity is up 40% since
-            switching."
+            &quot;Team Hub transformed how we work. Our productivity is up 40%
+            since switching.&quot;
           </p>
           <div className="flex items-center gap-2.5 mt-3">
             <div className="w-7 h-7 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-bold">
@@ -159,12 +171,11 @@ export default function Login() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(handleLogin)} className="space-y-4">
             <Input
               label="Work email"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              {...register("email", { required: true })}
               placeholder="you@company.com"
               required
             />
@@ -175,8 +186,7 @@ export default function Login() {
               <div className="relative">
                 <input
                   type={showPass ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register("password", { required: true })}
                   placeholder="••••••••"
                   className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 pr-10 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
                   required
@@ -216,16 +226,16 @@ export default function Login() {
               type="submit"
               className="w-full"
               size="lg"
-              loading={loading}
-              icon={!loading && <ArrowRight className="w-4 h-4" />}
+              loading={isSubmitting}
+              icon={!isSubmitting && <ArrowRight className="w-4 h-4" />}
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {isSubmitting ? "Signing in..." : "Sign In"}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-[var(--text-muted)]">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 href="/register"
                 className="text-[var(--accent)] font-medium hover:underline"

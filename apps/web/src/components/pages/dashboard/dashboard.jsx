@@ -7,6 +7,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import { useEffect } from "react";
 import {
   AreaChart,
   Area,
@@ -16,6 +17,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { toast } from "sonner";
 
 import Header from "@/components/common/header";
 import { Avatar } from "@/components/ui/avatar";
@@ -50,13 +52,54 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function Dashboard() {
-  const { currentUser, tasks, goals, announcements, users } = useAppStore();
+  const {
+    activeWorkspace,
+    announcements,
+    dashboardStats,
+    goals,
+    loadAnnouncements,
+    loadDashboard,
+    loadGoals,
+    loadTasks,
+    loadWorkspaceDetails,
+    tasks,
+    users,
+  } = useAppStore();
   const totalTasks = Object.values(tasks).flat().length;
-  const doneTasks = tasks.done.length;
+  const doneTasks = dashboardStats?.overview?.tasks?.completed ?? tasks.done.length;
   const onlineUsers = users.filter((u) => u.online);
+  const activeGoals = dashboardStats?.overview?.goals?.total ?? goals.length;
+  const totalMembers = dashboardStats?.overview?.totalMembers ?? users.length;
+  const completionRate = dashboardStats?.overview?.tasks?.completionRate ?? 78;
 
   const recentTasks = Object.values(tasks).flat().slice(0, 5);
   const topGoals = goals.slice(0, 3);
+
+  useEffect(() => {
+    if (!activeWorkspace?.id) {
+      return;
+    }
+
+    Promise.all([
+      loadDashboard(activeWorkspace.id),
+      loadWorkspaceDetails(activeWorkspace.id),
+      loadTasks(activeWorkspace.id),
+      loadGoals(activeWorkspace.id),
+      loadAnnouncements(activeWorkspace.id),
+    ]).then((results) => {
+      const failed = results.find((result) => result?.ok === false);
+      if (failed) {
+        toast.error(failed.error);
+      }
+    });
+  }, [
+    activeWorkspace?.id,
+    loadAnnouncements,
+    loadDashboard,
+    loadGoals,
+    loadTasks,
+    loadWorkspaceDetails,
+  ]);
 
   return (
     <div className="space-y-6 animate-slide-in">
@@ -78,7 +121,7 @@ export default function Dashboard() {
         />
         <StatCard
           title="Active Goals"
-          value={goals.length}
+          value={activeGoals}
           change="8%"
           changeType="up"
           icon={<Target size={18} />}
@@ -88,7 +131,7 @@ export default function Dashboard() {
         />
         <StatCard
           title="Team Online"
-          value={`${onlineUsers.length}/${users.length}`}
+          value={`${onlineUsers.length}/${totalMembers}`}
           icon={<Users size={18} />}
           iconColor="#0891b2"
           iconBg="#cffafe"
@@ -96,7 +139,7 @@ export default function Dashboard() {
         />
         <StatCard
           title="Velocity"
-          value="78%"
+          value={`${completionRate}%`}
           change="4%"
           changeType="up"
           icon={<TrendingUp size={18} />}
@@ -224,7 +267,7 @@ export default function Dashboard() {
               Goal Progress
             </h3>
             <Link
-              href="/goals"
+              href="/dashboard/goals"
               className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1"
             >
               View all <ArrowRight className="w-3 h-3" />
@@ -268,7 +311,7 @@ export default function Dashboard() {
               Recent Tasks
             </h3>
             <Link
-              href="/tasks"
+              href="/dashboard/tasks"
               className="text-xs text-[var(--accent)] hover:underline flex items-center gap-1"
             >
               View all <ArrowRight className="w-3 h-3" />
@@ -328,7 +371,7 @@ export default function Dashboard() {
                   {formatDate(announcements[0].createdAt)}
                 </span>
                 <Link
-                  href="/announcements"
+                  href="/dashboard/announcements"
                   className="text-xs text-[var(--accent)] hover:underline ml-auto"
                 >
                   Read more

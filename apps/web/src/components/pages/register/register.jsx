@@ -3,6 +3,8 @@ import { Check, ArrowRight, Users, Target, BarChart2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
@@ -14,33 +16,54 @@ const STEPS = ["Account", "Workspace", "Team"];
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { login, theme, toggleTheme } = useAppStore();
+  const { register, theme, toggleTheme } = useAppStore();
   const [step, setStep] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    workspace: "",
-    role: "",
-    invite: "",
+  const [error, setError] = useState("");
+  const {
+    formState: { isSubmitting },
+    handleSubmit,
+    register: registerField,
+  } = useForm({
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      workspace: "",
+      role: "",
+      invite: "",
+    },
   });
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
-  const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
-
-  const nextStep = async () => {
+  const nextStep = async (values) => {
     if (step < 2) {
       setStep((s) => s + 1);
       return;
     }
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    login(form.email, form.password);
-    router.push("/dashboard");
+
+    setError("");
+
+    const ok = await register({
+      name: values.name,
+      email: values.email,
+      password: values.password,
+      workspaceName: values.workspace,
+    });
+
+    if (ok) {
+      toast.success("Account created");
+      router.push("/dashboard");
+      return;
+    }
+
+    const message =
+      useAppStore.getState().authError ||
+      "Unable to create your account. Please check your details.";
+    setError(message);
+    toast.error(message);
   };
 
   const features = [
@@ -121,15 +144,13 @@ export default function RegisterPage() {
               </div>
               <Input
                 label="Full name"
-                value={form.name}
-                onChange={(e) => update("name", e.target.value)}
+                {...registerField("name", { required: true })}
                 placeholder="Alex Chen"
               />
               <Input
                 label="Work email"
                 type="email"
-                value={form.email}
-                onChange={(e) => update("email", e.target.value)}
+                {...registerField("email", { required: true })}
                 placeholder="alex@company.com"
               />
               <div className="space-y-1.5">
@@ -138,8 +159,7 @@ export default function RegisterPage() {
                 </label>
                 <input
                   type="password"
-                  value={form.password}
-                  onChange={(e) => update("password", e.target.value)}
+                  {...registerField("password", { required: true })}
                   placeholder="Min. 8 characters"
                   className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-all"
                 />
@@ -175,13 +195,12 @@ export default function RegisterPage() {
                   Set up your workspace
                 </h2>
                 <p className="text-sm text-[var(--text-muted)] mt-1">
-                  This will be your team's home in Team Hub
+                  This will be your team&apos;s home in Team Hub
                 </p>
               </div>
               <Input
                 label="Workspace name"
-                value={form.workspace}
-                onChange={(e) => update("workspace", e.target.value)}
+                {...registerField("workspace")}
                 placeholder="Acme Inc."
               />
               <div className="space-y-1.5">
@@ -189,8 +208,7 @@ export default function RegisterPage() {
                   Your role
                 </label>
                 <select
-                  value={form.role}
-                  onChange={(e) => update("role", e.target.value)}
+                  {...registerField("role")}
                   className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                 >
                   <option value="">Select your role</option>
@@ -234,8 +252,7 @@ export default function RegisterPage() {
                   Email addresses
                 </label>
                 <textarea
-                  value={form.invite}
-                  onChange={(e) => update("invite", e.target.value)}
+                  {...registerField("invite")}
                   placeholder="teammate@company.com, another@company.com"
                   rows={3}
                   className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent resize-none"
@@ -246,7 +263,7 @@ export default function RegisterPage() {
               </div>
               <div className="bg-[var(--surface-2)] rounded-xl p-4 space-y-2.5">
                 <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
-                  What's included
+                  What&apos;s included
                 </p>
                 {features.map((f) => (
                   <div
@@ -265,18 +282,21 @@ export default function RegisterPage() {
           )}
 
           <Button
-            onClick={nextStep}
+            onClick={handleSubmit(nextStep)}
             className="w-full mt-6"
             size="lg"
-            loading={loading}
-            icon={!loading && <ArrowRight className="w-4 h-4" />}
+            loading={isSubmitting}
+            icon={!isSubmitting && <ArrowRight className="w-4 h-4" />}
           >
             {step < 2
               ? "Continue"
-              : loading
+              : isSubmitting
                 ? "Setting up..."
                 : "Launch my workspace"}
           </Button>
+          {error && (
+            <p className="mt-3 text-sm text-[var(--danger)]">{error}</p>
+          )}
         </div>
 
         <p className="text-center text-sm text-[var(--text-muted)] mt-6">

@@ -9,7 +9,9 @@ import {
   GripVertical,
   MoreHorizontal,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
 
 import Header from "@/components/common/header";
 import { Modal } from "@/components/common/modal";
@@ -162,7 +164,7 @@ function KanbanBoard({ tasks, onMove, onAddTask }) {
   );
 }
 
-function ListView({ tasks, onMove }) {
+function ListView({ tasks }) {
   const allTasks = COLUMNS.flatMap((col) =>
     (tasks[col] || []).map((t) => ({ ...t, _col: col })),
   );
@@ -211,28 +213,64 @@ function ListView({ tasks, onMove }) {
 }
 
 export default function TasksPage() {
-  const { tasks, taskView, setTaskView, moveTask, addTask, users } =
-    useAppStore();
+  const {
+    activeWorkspace,
+    addTask,
+    loadTasks,
+    moveTask,
+    setTaskView,
+    taskView,
+    tasks,
+    tasksLoading,
+    users,
+  } = useAppStore();
   const [addOpen, setAddOpen] = useState(false);
   const [targetCol, setTargetCol] = useState("todo");
-  const [form, setForm] = useState({
-    title: "",
-    desc: "",
-    priority: "medium",
-    label: "Frontend",
-    dueDate: "",
+  const {
+    formState: { isSubmitting },
+    handleSubmit,
+    control,
+    register: registerField,
+    reset,
+    setValue,
+  } = useForm({
+    defaultValues: {
+      title: "",
+      desc: "",
+      priority: "medium",
+      label: "Frontend",
+      dueDate: "",
+    },
   });
+  const priority = useWatch({ control, name: "priority" });
+  const label = useWatch({ control, name: "label" });
 
   const totalTasks = Object.values(tasks).flat().length;
-  const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  useEffect(() => {
+    if (activeWorkspace?.id) {
+      loadTasks(activeWorkspace.id).then((result) => {
+        if (result?.ok === false) {
+          toast.error(result.error);
+        }
+      });
+    }
+  }, [activeWorkspace?.id, loadTasks]);
 
   const handleAddTask = (col) => {
     setTargetCol(col);
     setAddOpen(true);
   };
-  const handleCreate = () => {
-    addTask(targetCol, { ...form, assignee: users[0] });
-    setForm({
+  const handleCreate = async (values) => {
+    const result = await addTask(targetCol, { ...values, assignee: users[0] });
+
+    if (result?.ok === false) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success("Task created");
+    reset({
       title: "",
       desc: "",
       priority: "medium",
@@ -242,12 +280,25 @@ export default function TasksPage() {
     setAddOpen(false);
   };
 
+  const handleMove = async (...args) => {
+    const result = await moveTask(...args);
+    if (result?.ok === false) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Task moved");
+  };
+
   return (
     <>
       <div className="space-y-5 animate-slide-in">
         <Header
           title="Tasks"
-          subtitle={`${totalTasks} tasks across ${COLUMNS.length} columns`}
+          subtitle={
+            tasksLoading
+              ? "Loading tasks..."
+              : `${totalTasks} tasks across ${COLUMNS.length} columns`
+          }
         />
         {/* Toolbar */}
         <div className="flex items-center gap-3 flex-wrap">
@@ -296,11 +347,11 @@ export default function TasksPage() {
         {taskView === "kanban" ? (
           <KanbanBoard
             tasks={tasks}
-            onMove={moveTask}
+            onMove={handleMove}
             onAddTask={handleAddTask}
           />
         ) : (
-          <ListView tasks={tasks} onMove={moveTask} />
+          <ListView tasks={tasks} onMove={handleMove} />
         )}
       </div>
 
@@ -314,21 +365,21 @@ export default function TasksPage() {
             <Button variant="secondary" onClick={() => setAddOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreate}>Create Task</Button>
+            <Button onClick={handleSubmit(handleCreate)} loading={isSubmitting}>
+              Create Task
+            </Button>
           </>
         }
       >
         <div className="space-y-4">
           <Input
             label="Task title"
-            value={form.title}
-            onChange={(e) => update("title", e.target.value)}
+            {...registerField("title", { required: true })}
             placeholder="What needs to be done?"
           />
           <Textarea
             label="Description"
-            value={form.desc}
-            onChange={(e) => update("desc", e.target.value)}
+            {...registerField("desc")}
             placeholder="Add more context..."
             rows={3}
           />
@@ -336,8 +387,8 @@ export default function TasksPage() {
             <Select
               label="Priority"
               options={PRIORITY_OPTS}
-              value={form.priority}
-              onChange={(v) => update("priority", v)}
+              value={priority}
+              onChange={(v) => setValue("priority", v)}
             />
             <Select
               label="Label"
@@ -350,15 +401,14 @@ export default function TasksPage() {
                 "Marketing",
                 "Security",
               ].map((l) => ({ value: l, label: l }))}
-              value={form.label}
-              onChange={(v) => update("label", v)}
+              value={label}
+              onChange={(v) => setValue("label", v)}
             />
           </div>
           <Input
             label="Due date"
             type="date"
-            value={form.dueDate}
-            onChange={(e) => update("dueDate", e.target.value)}
+            {...registerField("dueDate")}
           />
         </div>
       </Modal>

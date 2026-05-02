@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 export function Toggle({ checked, onChange, label }) {
   return (
     <label className="flex items-center gap-2 cursor-pointer">

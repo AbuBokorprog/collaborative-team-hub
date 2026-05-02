@@ -6,7 +6,9 @@ import {
   AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
 
 import Header from "@/components/common/header";
 import { Modal } from "@/components/common/modal";
@@ -23,29 +25,68 @@ import { useAppStore } from "@/store/useAppStore";
 const STATUS_TABS = ["all", "on-track", "at-risk", "behind"];
 
 export default function GoalsPage() {
-  const { goals, updateGoalProgress } = useAppStore();
+  const {
+    activeWorkspace,
+    createGoal,
+    goals,
+    loadGoals,
+    updateGoalProgress,
+  } = useAppStore();
   const [filter, setFilter] = useState("all");
   const [newGoalOpen, setNewGoalOpen] = useState(false);
-  const [editingGoal, setEditingGoal] = useState(null);
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    dueDate: "",
-    priority: "medium",
-    status: "on-track",
+  const {
+    formState: { isSubmitting },
+    control,
+    handleSubmit,
+    register,
+    reset,
+    setValue,
+  } = useForm({
+    defaultValues: {
+      title: "",
+      description: "",
+      dueDate: "",
+      priority: "medium",
+      status: "on-track",
+    },
   });
+  const priority = useWatch({ control, name: "priority" });
+
+  useEffect(() => {
+    if (!activeWorkspace?.id) {
+      return;
+    }
+
+    loadGoals(activeWorkspace.id).then((result) => {
+      if (result?.ok === false) {
+        toast.error(result.error);
+      }
+    });
+  }, [activeWorkspace?.id, loadGoals]);
 
   const filtered =
     filter === "all" ? goals : goals.filter((g) => g.status === filter);
 
+  const progressTotal = goals.reduce((a, g) => a + g.progress, 0);
   const summaryStats = {
     total: goals.length,
     onTrack: goals.filter((g) => g.status === "on-track").length,
     atRisk: goals.filter((g) => g.status === "at-risk").length,
     behind: goals.filter((g) => g.status === "behind").length,
-    avgProgress: Math.round(
-      goals.reduce((a, g) => a + g.progress, 0) / goals.length,
-    ),
+    avgProgress: goals.length ? Math.round(progressTotal / goals.length) : 0,
+  };
+
+  const handleCreateGoal = async (values) => {
+    const result = await createGoal(values);
+
+    if (result?.ok === false) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success("Goal created");
+    reset();
+    setNewGoalOpen(false);
   };
 
   const statusIcons = {
@@ -217,23 +258,24 @@ export default function GoalsPage() {
             <Button variant="secondary" onClick={() => setNewGoalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => setNewGoalOpen(false)}>Create Goal</Button>
+            <Button
+              onClick={handleSubmit(handleCreateGoal)}
+              loading={isSubmitting}
+            >
+              Create Goal
+            </Button>
           </>
         }
       >
         <div className="space-y-4">
           <Input
             label="Goal title"
-            value={form.title}
-            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            {...register("title", { required: true })}
             placeholder="e.g. Launch v2.0 Platform"
           />
           <Textarea
             label="Description"
-            value={form.description}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, description: e.target.value }))
-            }
+            {...register("description")}
             placeholder="What does success look like?"
             rows={3}
           />
@@ -245,17 +287,13 @@ export default function GoalsPage() {
                 { value: "medium", label: "Medium" },
                 { value: "low", label: "Low" },
               ]}
-              value={form.priority}
-              onChange={(v) => setForm((f) => ({ ...f, priority: v }))}
+              value={priority}
+              onChange={(v) => setValue("priority", v)}
             />
             <Input
               label="Due date"
-              type="text"
-              value={form.dueDate}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, dueDate: e.target.value }))
-              }
-              placeholder="Mar 31"
+              type="date"
+              {...register("dueDate")}
             />
           </div>
         </div>

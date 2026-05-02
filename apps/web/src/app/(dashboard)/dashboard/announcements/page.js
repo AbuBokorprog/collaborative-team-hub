@@ -11,7 +11,9 @@ import {
   X,
   Search,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
 
 import Header from "@/components/common/header";
 import { Avatar } from "@/components/ui/avatar";
@@ -185,48 +187,72 @@ function RichEditor({ value, onChange }) {
 }
 
 export default function AnnouncementsPage() {
-  const { announcements, addAnnouncement, currentUser } = useAppStore();
-  const [anns, setAnns] = useState(announcements);
+  const {
+    activeWorkspace,
+    addAnnouncement,
+    announcements,
+    currentUser,
+    loadAnnouncements,
+    reactToAnnouncement,
+  } = useAppStore();
   const [composing, setComposing] = useState(false);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
   const [audience, setAudience] = useState("All");
   const [search, setSearch] = useState("");
+  const {
+    formState: { isSubmitting },
+    control,
+    handleSubmit,
+    register,
+    reset,
+    setValue,
+  } = useForm({
+    defaultValues: {
+      title: "",
+      content: "",
+    },
+  });
 
-  const filtered = anns.filter(
+  const content = useWatch({ control, name: "content" });
+
+  useEffect(() => {
+    if (!activeWorkspace?.id) {
+      return;
+    }
+
+    loadAnnouncements(activeWorkspace.id).then((result) => {
+      if (result?.ok === false) {
+        toast.error(result.error);
+      }
+    });
+  }, [activeWorkspace?.id, loadAnnouncements]);
+
+  const filtered = announcements.filter(
     (a) =>
       a.title.toLowerCase().includes(search.toLowerCase()) ||
       a.content.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const handlePost = () => {
-    if (!title.trim() || !content.trim()) {return;}
-    const newAnn = {
-      id: `a${Date.now()}`,
-      title,
-      content,
-      author: currentUser,
-      createdAt: new Date().toISOString(),
-      pinned: false,
-      reactions: {},
-      comments: 0,
-      audience,
-    };
-    setAnns([newAnn, ...anns]);
-    setTitle("");
-    setContent("");
+  const handlePost = async (values) => {
+    const result = await addAnnouncement({
+      title: values.title,
+      content: values.content,
+    });
+
+    if (result?.ok === false) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success("Announcement posted");
+    reset();
     setComposing(false);
   };
 
-  const handleReact = (annId, emoji) => {
-    setAnns((prev) =>
-      prev.map((a) => {
-        if (a.id !== annId) {return a;}
-        const reactions = { ...a.reactions };
-        reactions[emoji] = (reactions[emoji] || 0) + 1;
-        return { ...a, reactions };
-      }),
-    );
+  const handleReact = async (annId, emoji) => {
+    const result = await reactToAnnouncement(annId, emoji);
+    if (result?.ok === false) {
+      toast.error(result.error);
+    }
   };
 
   const pinned = filtered.filter((a) => a.pinned);
@@ -237,7 +263,7 @@ export default function AnnouncementsPage() {
       <div className="space-y-6 animate-slide-in">
         <Header
           title="Announcements"
-          subtitle={`${anns.length} announcements · ${pinned.length} pinned`}
+          subtitle={`${announcements.length} announcements · ${pinned.length} pinned`}
         />
         {/* Compose */}
         {!composing ? (
@@ -273,12 +299,14 @@ export default function AnnouncementsPage() {
             </div>
             <div className="space-y-3">
               <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                {...register("title", { required: true })}
                 placeholder="Announcement title..."
                 className="w-full text-lg font-semibold bg-transparent border-b border-[var(--border)] pb-2 text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
               />
-              <RichEditor value={content} onChange={setContent} />
+              <RichEditor
+                value={content}
+                onChange={(value) => setValue("content", value)}
+              />
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-[var(--text-muted)]">
@@ -302,8 +330,9 @@ export default function AnnouncementsPage() {
                   Discard
                 </Button>
                 <Button
-                  onClick={handlePost}
-                  disabled={!title.trim() || !content.trim()}
+                  onClick={handleSubmit(handlePost)}
+                  disabled={!content?.trim()}
+                  loading={isSubmitting}
                 >
                   Post Announcement
                 </Button>

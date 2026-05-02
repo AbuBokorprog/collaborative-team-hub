@@ -1,14 +1,8 @@
 "use client";
-import {
-  Plus,
-  Settings,
-  Crown,
-  MoreHorizontal,
-  Mail,
-  Trash2,
-} from "lucide-react";
-import { useState } from "react";
-
+import { Plus, Crown, MoreHorizontal, Mail, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
 import Header from "@/components/common/header";
 import { Modal } from "@/components/common/modal";
 import { Select } from "@/components/common/select";
@@ -21,12 +15,13 @@ import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 
 const ROLES = [
-  { value: "admin", label: "Admin" },
-  { value: "member", label: "Member" },
-  { value: "viewer", label: "Viewer" },
+  { value: "ADMIN", label: "Admin" },
+  { value: "MEMBER", label: "Member" },
 ];
 
 const ROLE_COLORS = {
+  ADMIN: "accent",
+  MEMBER: "info",
   "Product Lead": "accent",
   Designer: "danger",
   Engineer: "info",
@@ -34,17 +29,90 @@ const ROLE_COLORS = {
 };
 
 export default function Workspace() {
-  const { activeWorkspace, workspaces, users, currentUser } = useAppStore();
+  const {
+    activeWorkspace,
+    inviteMember,
+    loadWorkspaceDetails,
+    updateWorkspace,
+    workspaceStats,
+    workspaces,
+    users,
+  } = useAppStore();
   const [activeTab, setActiveTab] = useState("overview");
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("member");
+  const {
+    formState: { isSubmitting: inviting },
+    control: inviteControl,
+    handleSubmit: handleInviteSubmit,
+    register: registerInvite,
+    reset: resetInvite,
+    setValue: setInviteValue,
+  } = useForm({
+    defaultValues: { email: "", role: "MEMBER" },
+  });
+  const {
+    formState: { isSubmitting: savingWorkspace },
+    handleSubmit: handleWorkspaceSubmit,
+    register: registerWorkspace,
+    reset: resetWorkspace,
+  } = useForm({
+    defaultValues: {
+      name: activeWorkspace?.name || "",
+      description: activeWorkspace?.description || "",
+    },
+  });
+  const inviteRole = useWatch({ control: inviteControl, name: "role" });
+
+  useEffect(() => {
+    if (!activeWorkspace?.id) {
+      return;
+    }
+
+    resetWorkspace({
+      name: activeWorkspace.name || "",
+      description: activeWorkspace.description || "",
+    });
+
+    loadWorkspaceDetails(activeWorkspace.id).then((result) => {
+      if (result?.ok === false) {
+        toast.error(result.error);
+      }
+    });
+  }, [activeWorkspace, loadWorkspaceDetails, resetWorkspace]);
+
+  const handleInvite = async (values) => {
+    const result = await inviteMember(values);
+
+    if (result?.ok === false) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success("Member invited");
+    resetInvite();
+    setInviteOpen(false);
+  };
+
+  const handleSaveWorkspace = async (values) => {
+    const result = await updateWorkspace(values);
+
+    if (result?.ok === false) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success("Workspace updated");
+  };
 
   const stats = [
-    { label: "Members", value: users.length, icon: "👥" },
-    { label: "Projects", value: 8, icon: "📁" },
-    { label: "Tasks", value: 42, icon: "✅" },
-    { label: "Goals", value: 5, icon: "🎯" },
+    {
+      label: "Members",
+      value: workspaceStats?.members ?? users.length,
+      icon: "👥",
+    },
+    { label: "Projects", value: workspaces.length, icon: "📁" },
+    { label: "Tasks", value: workspaceStats?.tasks ?? 0, icon: "✅" },
+    { label: "Goals", value: workspaceStats?.goals ?? 0, icon: "🎯" },
   ];
 
   const TABS = ["overview", "members", "settings"];
@@ -77,13 +145,6 @@ export default function Workspace() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={<Settings className="w-4 h-4" />}
-              >
-                Settings
-              </Button>
               <Button
                 size="sm"
                 icon={<Plus className="w-4 h-4" />}
@@ -206,25 +267,31 @@ export default function Workspace() {
                       item: "Q1 Planning Week Kickoff",
                       time: "5h ago",
                     },
-                  ].map((a, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <Avatar user={a.user} size="sm" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-[var(--text-primary)]">
-                          <span className="font-medium">
-                            {a.user.name.split(" ")[0]}
-                          </span>{" "}
-                          <span className="text-[var(--text-muted)]">
-                            {a.action}
-                          </span>{" "}
-                          <span className="font-medium">"{a.item}"</span>
-                        </p>
-                        <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                          {a.time}
-                        </p>
+                  ].map((a, i) => {
+                    console.log("a", a);
+                    return (
+                      <div key={i} className="flex items-start gap-3">
+                        <Avatar user={a.user} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-[var(--text-primary)]">
+                            <span className="font-medium">
+                              {/* {a.user.name.split(" ")[0]} */}
+                              test
+                            </span>{" "}
+                            <span className="text-[var(--text-muted)]">
+                              {a.action}
+                            </span>{" "}
+                            <span className="font-medium">
+                              &quot;{a.item}&quot;
+                            </span>
+                          </p>
+                          <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                            {a.time}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </Card>
             </div>
@@ -361,11 +428,7 @@ export default function Workspace() {
               <div className="space-y-4">
                 <Input
                   label="Workspace name"
-                  defaultValue={activeWorkspace?.name}
-                />
-                <Input
-                  label="Workspace URL"
-                  defaultValue="teamhub.io/teamhub-hq"
+                  {...registerWorkspace("name", { required: true })}
                 />
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-[var(--text-primary)]">
@@ -373,11 +436,16 @@ export default function Workspace() {
                   </label>
                   <textarea
                     rows={3}
-                    defaultValue="Our main product workspace for the core team."
+                    {...registerWorkspace("description")}
                     className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
                   />
                 </div>
-                <Button>Save Changes</Button>
+                <Button
+                  loading={savingWorkspace}
+                  onClick={handleWorkspaceSubmit(handleSaveWorkspace)}
+                >
+                  Save Changes
+                </Button>
               </div>
             </Card>
             <Card className="border-[var(--danger)]/30">
@@ -409,7 +477,12 @@ export default function Workspace() {
             <Button variant="secondary" onClick={() => setInviteOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={() => setInviteOpen(false)}>Send Invite</Button>
+            <Button
+              loading={inviting}
+              onClick={handleInviteSubmit(handleInvite)}
+            >
+              Send Invite
+            </Button>
           </>
         }
       >
@@ -417,19 +490,18 @@ export default function Workspace() {
           <Input
             label="Email address"
             type="email"
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
+            {...registerInvite("email", { required: true })}
             placeholder="colleague@company.com"
           />
           <Select
             label="Role"
             options={ROLES}
             value={inviteRole}
-            onChange={setInviteRole}
+            onChange={(value) => setInviteValue("role", value)}
           />
           <div className="bg-[var(--surface-2)] rounded-xl p-3">
             <p className="text-xs text-[var(--text-muted)]">
-              They'll receive an email invitation to join{" "}
+              They&apos;ll receive an email invitation to join{" "}
               <strong className="text-[var(--text-primary)]">
                 {activeWorkspace?.name}
               </strong>

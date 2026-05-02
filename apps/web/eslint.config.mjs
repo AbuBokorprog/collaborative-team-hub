@@ -30,22 +30,6 @@ const eslintConfig = defineConfig([
       /**
        * Imports
        */
-      "import/order": [
-        "error",
-        {
-          groups: [
-            "builtin",
-            "external",
-            "internal",
-            ["parent", "sibling", "index"],
-          ],
-          "newlines-between": "always",
-          alphabetize: {
-            order: "asc",
-            caseInsensitive: true,
-          },
-        },
-      ],
       "import/no-duplicates": "error",
       "import/newline-after-import": "error",
 
@@ -80,12 +64,6 @@ const eslintConfig = defineConfig([
       /**
        * Unicorn (cleaner code)
        */
-      "unicorn/filename-case": [
-        "error",
-        {
-          case: "kebabCase",
-        },
-      ],
       "unicorn/prevent-abbreviations": "off",
       "unicorn/no-null": "off",
     },

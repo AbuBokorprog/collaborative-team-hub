@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import Sidebar from "@/components/common/sidebar";
 import { cn } from "@/lib/utils";
@@ -9,19 +9,37 @@ import { useAppStore } from "@/store/useAppStore";
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
-  const { isAuthenticated, theme, sidebarOpen } = useAppStore();
+  const { authLoading, hydrateSession, isAuthenticated, theme, sidebarOpen } =
+    useAppStore();
+  const [sessionChecked, setSessionChecked] = useState(false);
 
-  // useEffect(() => {
-  //   if (!isAuthenticated) {
-  //     router.replace("/login");
-  //   }
-  // }, [isAuthenticated, router]);
+  useEffect(() => {
+    let active = true;
+
+    hydrateSession().finally(() => {
+      if (active) {
+        setSessionChecked(true);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [hydrateSession]);
+
+  useEffect(() => {
+    if (sessionChecked && !authLoading && !isAuthenticated) {
+      router.replace("/login");
+    }
+  }, [authLoading, isAuthenticated, router, sessionChecked]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
-  // if (!isAuthenticated) return null;
+  if (!sessionChecked || authLoading || !isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

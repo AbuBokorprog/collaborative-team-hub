@@ -1,6 +1,133 @@
 "use client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { analyticsApi } from "@/services/analytics-api";
+import { announcementApi } from "@/services/announcement-api";
+import { authApi } from "@/services/auth-api";
+import { goalApi } from "@/services/goal-api";
+import { taskApi } from "@/services/task-api";
+import { setAccessToken } from "@/services/token-store";
+import { workspaceApi } from "@/services/workspace-api";
+
+const toUserView = (user) => {
+  if (!user) {
+    return null;
+  }
+
+  return {
+    ...user,
+    role: user.role || "Member",
+    avatar: user.avatar || user.name?.slice(0, 2).toUpperCase(),
+    color: user.color || "#5b4fff",
+    online: true,
+  };
+};
+
+const toWorkspaceView = (workspace) => ({
+  ...workspace,
+  color: workspace.color || workspace.accentColor || "#5b4fff",
+  plan: workspace.plan || "Workspace",
+  members: workspace.members || 0,
+});
+
+const emptyTaskBoard = () => ({
+  todo: [],
+  inProgress: [],
+  review: [],
+  done: [],
+});
+
+const statusToColumn = {
+  TODO: "todo",
+  IN_PROGRESS: "inProgress",
+  DONE: "done",
+};
+
+const toTaskView = (task) => ({
+  ...task,
+  desc: task.description || task.desc || "",
+  label: task.goal?.title || "General",
+  priority: (task.priority || "MEDIUM").toLowerCase(),
+  dueDate: task.dueDate?.slice?.(0, 10) || task.dueDate || "",
+  assignee: task.assignee
+    ? toUserView(task.assignee)
+    : {
+        name: "Unassigned",
+        avatar: "?",
+        color: "#64748b",
+        online: false,
+      },
+});
+
+const boardFromApi = (board) => {
+  const next = emptyTaskBoard();
+
+  for (const [column, tasks] of Object.entries(board || {})) {
+    const target = next[column] ? column : statusToColumn[column] || "todo";
+    next[target] = [...next[target], ...(tasks || []).map(toTaskView)];
+  }
+
+  return next;
+};
+
+const goalStatusToView = {
+  PLANNED: "on-track",
+  ACTIVE: "on-track",
+  COMPLETED: "completed",
+  BLOCKED: "behind",
+};
+
+const goalStatusToApi = {
+  "on-track": "ACTIVE",
+  "at-risk": "ACTIVE",
+  behind: "BLOCKED",
+  completed: "COMPLETED",
+};
+
+const toGoalView = (goal) => {
+  const milestones = goal.milestones || [];
+  const progress = milestones.length
+    ? Math.round(
+        milestones.reduce((total, item) => total + item.progressPercentage, 0) /
+          milestones.length,
+      )
+    : goal.status === "COMPLETED"
+      ? 100
+      : 0;
+
+  return {
+    ...goal,
+    status: goalStatusToView[goal.status] || goal.status || "on-track",
+    progress,
+    dueDate: goal.dueDate
+      ? new Date(goal.dueDate).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        })
+      : "No date",
+    priority: "medium",
+    team: [toUserView(goal.owner)].filter(Boolean),
+  };
+};
+
+const reactionCounts = (reactions) => {
+  if (!Array.isArray(reactions)) {
+    return reactions || {};
+  }
+
+  return reactions.reduce((result, reaction) => {
+    result[reaction.emoji] = (result[reaction.emoji] || 0) + 1;
+    return result;
+  }, {});
+};
+
+const toAnnouncementView = (announcement) => ({
+  ...announcement,
+  author: toUserView(announcement.author),
+  reactions: reactionCounts(announcement.reactions),
+  comments: announcement._count?.comments || announcement.comments?.length || 0,
+  audience: "All",
+});
 
 const USERS = [
   {
@@ -315,11 +442,88 @@ export const useAppStore = create(
       // Auth
       currentUser: USERS[0],
       isAuthenticated: false,
-      login: (email, password) => {
-        set({ isAuthenticated: true, currentUser: USERS[0] });
-        return true;
+      authLoading: false,
+      authError: "",
+      login: async (email, password) => {
+        set({ authLoading: true, authError: "" });
+
+        try {
+          const data = await authApi.login({ email, password });
+          set({
+            isAuthenticated: true,
+            currentUser: toUserView(data.user),
+            authLoading: false,
+          });
+          await get().loadWorkspaces();
+          return true;
+        } catch (error) {
+          set({
+            isAuthenticated: false,
+            authLoading: false,
+            authError: error.message || "Unable to sign in",
+          });
+          return false;
+        }
       },
-      logout: () => set({ isAuthenticated: false }),
+      register: async ({ name, email, password, workspaceName }) => {
+        set({ authLoading: true, authError: "" });
+
+        try {
+          const data = await authApi.register({
+            name,
+            email,
+            password,
+            workspaceName,
+          });
+          set({
+            isAuthenticated: true,
+            currentUser: toUserView(data.user),
+            authLoading: false,
+          });
+          await get().loadWorkspaces();
+          return true;
+        } catch (error) {
+          set({
+            isAuthenticated: false,
+            authLoading: false,
+            authError: error.message || "Unable to create account",
+          });
+          return false;
+        }
+      },
+      hydrateSession: async () => {
+        if (get().authLoading) {
+          return;
+        }
+
+        set({ authLoading: true, authError: "" });
+
+        try {
+          const user = await authApi.me();
+          set({
+            isAuthenticated: true,
+            currentUser: toUserView(user),
+            authLoading: false,
+          });
+          await get().loadWorkspaces();
+        } catch {
+          setAccessToken(null);
+          set({
+            isAuthenticated: false,
+            authLoading: false,
+            currentUser: null,
+          });
+        }
+      },
+      logout: async () => {
+        await authApi.logout();
+        set({
+          isAuthenticated: false,
+          currentUser: null,
+          activeWorkspace: null,
+          workspaces: [],
+        });
+      },
 
       // Theme
       theme: "light",
@@ -337,18 +541,128 @@ export const useAppStore = create(
       workspaces: WORKSPACES,
       activeWorkspace: WORKSPACES[0],
       setActiveWorkspace: (ws) => set({ activeWorkspace: ws }),
+      workspaceStats: null,
+      workspaceMembers: [],
+      loadWorkspaces: async () => {
+        try {
+          const rows = await workspaceApi.list();
+          const workspaces = rows.map(toWorkspaceView);
+          set({
+            workspaces,
+            activeWorkspace: workspaces[0] || null,
+          });
+          return workspaces;
+        } catch (error) {
+          set({ authError: error.message || "Unable to load workspaces" });
+          return [];
+        }
+      },
+      loadWorkspaceDetails: async (workspaceId = get().activeWorkspace?.id) => {
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace selected" };
+        }
+
+        try {
+          const [members, stats] = await Promise.all([
+            workspaceApi.members(workspaceId),
+            workspaceApi.stats(workspaceId),
+          ]);
+          const users = members.map((member) =>
+            toUserView({ ...member.user, role: member.role }),
+          );
+
+          set({ workspaceMembers: members, workspaceStats: stats, users });
+          return { ok: true };
+        } catch (error) {
+          return {
+            ok: false,
+            error: error.message || "Unable to load workspace",
+          };
+        }
+      },
+      inviteMember: async (
+        payload,
+        workspaceId = get().activeWorkspace?.id,
+      ) => {
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace selected" };
+        }
+
+        try {
+          await workspaceApi.invite(workspaceId, payload);
+          await get().loadWorkspaceDetails(workspaceId);
+          return { ok: true };
+        } catch (error) {
+          return {
+            ok: false,
+            error: error.message || "Unable to invite member",
+          };
+        }
+      },
+      updateWorkspace: async (
+        payload,
+        workspaceId = get().activeWorkspace?.id,
+      ) => {
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace selected" };
+        }
+
+        try {
+          const workspace = await workspaceApi.update(workspaceId, payload);
+          const next = toWorkspaceView(workspace);
+          set((state) => ({
+            activeWorkspace: { ...state.activeWorkspace, ...next },
+            workspaces: state.workspaces.map((item) =>
+              item.id === workspaceId ? { ...item, ...next } : item,
+            ),
+          }));
+          return { ok: true };
+        } catch (error) {
+          return {
+            ok: false,
+            error: error.message || "Unable to update workspace",
+          };
+        }
+      },
 
       // Users
       users: USERS,
 
       // Tasks
       tasks: INITIAL_TASKS,
+      tasksLoading: false,
+      tasksError: "",
       taskView: "kanban",
       setTaskView: (v) => set({ taskView: v }),
-      moveTask: (taskId, fromCol, toCol) => {
+      loadTasks: async (workspaceId = get().activeWorkspace?.id) => {
+        if (!workspaceId) {
+          return;
+        }
+
+        set({ tasksLoading: true, tasksError: "" });
+
+        try {
+          const result = await taskApi.board(workspaceId);
+          set({
+            tasks: boardFromApi(result.board),
+            tasksLoading: false,
+          });
+          return { ok: true };
+        } catch (error) {
+          set({
+            tasksLoading: false,
+            tasksError: error.message || "Unable to load tasks",
+          });
+          return { ok: false, error: error.message || "Unable to load tasks" };
+        }
+      },
+      moveTask: async (taskId, fromCol, toCol) => {
         const tasks = get().tasks;
         const task = tasks[fromCol].find((t) => t.id === taskId);
-        if (!task) {return;}
+        if (!task) {
+          return { ok: false, error: "Task not found" };
+        }
+
         set({
           tasks: {
             ...tasks,
@@ -356,31 +670,228 @@ export const useAppStore = create(
             [toCol]: [...tasks[toCol], task],
           },
         });
+
+        const workspaceId = get().activeWorkspace?.id;
+        if (!workspaceId) {
+          return { ok: true };
+        }
+
+        try {
+          await taskApi.move(workspaceId, taskId, toCol);
+          return { ok: true };
+        } catch (error) {
+          set({
+            tasks,
+            tasksError: error.message || "Unable to move task",
+          });
+          return { ok: false, error: error.message || "Unable to move task" };
+        }
       },
-      addTask: (column, task) => {
+      addTask: async (column, task) => {
         const tasks = get().tasks;
-        const newTask = { ...task, id: `t${Date.now()}` };
+        const workspaceId = get().activeWorkspace?.id;
+        const optimisticId = `pending-${Date.now()}`;
+        const newTask = { ...task, id: optimisticId };
+
         set({ tasks: { ...tasks, [column]: [...tasks[column], newTask] } });
+
+        if (!workspaceId) {
+          return { ok: true };
+        }
+
+        try {
+          const created = await taskApi.create(workspaceId, {
+            title: task.title,
+            description: task.desc,
+            priority: task.priority,
+            dueDate: task.dueDate || undefined,
+            column,
+          });
+          set((state) => ({
+            tasks: {
+              ...state.tasks,
+              [column]: state.tasks[column].map((item) =>
+                item.id === optimisticId ? toTaskView(created) : item,
+              ),
+            },
+          }));
+          return { ok: true };
+        } catch (error) {
+          set({
+            tasks,
+            tasksError: error.message || "Unable to create task",
+          });
+          return { ok: false, error: error.message || "Unable to create task" };
+        }
       },
 
       // Goals
       goals: INITIAL_GOALS,
-      updateGoalProgress: (id, progress) =>
+      goalsLoading: false,
+      loadGoals: async (workspaceId = get().activeWorkspace?.id) => {
+        if (!workspaceId) {
+          return;
+        }
+
+        set({ goalsLoading: true });
+
+        try {
+          const result = await goalApi.list(workspaceId);
+          set({
+            goals: (result.data || result || []).map(toGoalView),
+            goalsLoading: false,
+          });
+          return { ok: true };
+        } catch (error) {
+          set({ goalsLoading: false });
+          return { ok: false, error: error.message || "Unable to load goals" };
+        }
+      },
+      createGoal: async (payload, workspaceId = get().activeWorkspace?.id) => {
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace selected" };
+        }
+
+        try {
+          const created = await goalApi.create(workspaceId, {
+            title: payload.title,
+            description: payload.description,
+            dueDate: payload.dueDate || undefined,
+            status: goalStatusToApi[payload.status] || "ACTIVE",
+          });
+          set((state) => ({ goals: [toGoalView(created), ...state.goals] }));
+          return { ok: true };
+        } catch (error) {
+          return { ok: false, error: error.message || "Unable to create goal" };
+        }
+      },
+      updateGoalProgress: async (id, progress) => {
+        const goals = get().goals;
         set((s) => ({
           goals: s.goals.map((g) => (g.id === id ? { ...g, progress } : g)),
-        })),
+        }));
+
+        const workspaceId = get().activeWorkspace?.id;
+        if (!workspaceId) {
+          return;
+        }
+
+        try {
+          await goalApi.progress(workspaceId, id, progress);
+          return { ok: true };
+        } catch (error) {
+          set({ goals });
+          return {
+            ok: false,
+            error: error.message || "Unable to update progress",
+          };
+        }
+      },
 
       // Announcements
       announcements: INITIAL_ANNOUNCEMENTS,
-      addAnnouncement: (ann) => {
-        const newAnn = {
-          ...ann,
-          id: `a${Date.now()}`,
-          createdAt: new Date().toISOString(),
-          reactions: {},
-          comments: 0,
-        };
-        set((s) => ({ announcements: [newAnn, ...s.announcements] }));
+      announcementsLoading: false,
+      loadAnnouncements: async (workspaceId = get().activeWorkspace?.id) => {
+        if (!workspaceId) {
+          return;
+        }
+
+        set({ announcementsLoading: true });
+
+        try {
+          const result = await announcementApi.list(workspaceId);
+          set({
+            announcements: (result.data || result || []).map(
+              toAnnouncementView,
+            ),
+            announcementsLoading: false,
+          });
+          return { ok: true };
+        } catch (error) {
+          set({ announcementsLoading: false });
+          return {
+            ok: false,
+            error: error.message || "Unable to load announcements",
+          };
+        }
+      },
+      addAnnouncement: async (ann, workspaceId = get().activeWorkspace?.id) => {
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace selected" };
+        }
+
+        try {
+          const created = await announcementApi.create(workspaceId, ann);
+          set((s) => ({
+            announcements: [toAnnouncementView(created), ...s.announcements],
+          }));
+          return { ok: true };
+        } catch (error) {
+          return {
+            ok: false,
+            error: error.message || "Unable to create announcement",
+          };
+        }
+      },
+      reactToAnnouncement: async (
+        announcementId,
+        emoji,
+        workspaceId = get().activeWorkspace?.id,
+      ) => {
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace selected" };
+        }
+
+        try {
+          await announcementApi.react(workspaceId, announcementId, emoji);
+          set((state) => ({
+            announcements: state.announcements.map((announcement) => {
+              if (announcement.id !== announcementId) {
+                return announcement;
+              }
+
+              return {
+                ...announcement,
+                reactions: {
+                  ...announcement.reactions,
+                  [emoji]: (announcement.reactions[emoji] || 0) + 1,
+                },
+              };
+            }),
+          }));
+          return { ok: true };
+        } catch (error) {
+          return { ok: false, error: error.message || "Unable to react" };
+        }
+      },
+
+      // Dashboard
+      dashboardStats: null,
+      dashboardLoading: false,
+      loadDashboard: async (workspaceId = get().activeWorkspace?.id) => {
+        if (!workspaceId) {
+          return;
+        }
+
+        set({ dashboardLoading: true });
+
+        try {
+          const [dashboard, overview] = await Promise.all([
+            analyticsApi.dashboard(workspaceId),
+            analyticsApi.overview(workspaceId),
+          ]);
+          set({
+            dashboardStats: { dashboard, overview },
+            dashboardLoading: false,
+          });
+          return { ok: true };
+        } catch (error) {
+          set({ dashboardLoading: false });
+          return {
+            ok: false,
+            error: error.message || "Unable to load dashboard",
+          };
+        }
       },
 
       // Notifications
@@ -397,6 +908,8 @@ export const useAppStore = create(
         theme: s.theme,
         isAuthenticated: s.isAuthenticated,
         sidebarOpen: s.sidebarOpen,
+        currentUser: s.currentUser,
+        activeWorkspace: s.activeWorkspace,
       }),
     },
   ),
