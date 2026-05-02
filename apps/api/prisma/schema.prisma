@@ -1,87 +1,242 @@
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = "DATABASE_URL"
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  DELETED
+  BLOCK
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum GoalStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  BLOCKED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum NotificationType {
+  MENTION
+  TASK
+  ANNOUNCEMENT
+  SYSTEM
 }
 
 model User {
+  id             String           @id @default(cuid())
+  name           String
+  email          String           @unique
+  password       String
+  avatar         String?
+  status         UserStatus       @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  memberships    Membership[]
+  refreshTokens  RefreshToken[]
+  ownedGoals     Goal[]           @relation("GoalOwner")
+  tasksAssigned  Task[]
+  goalUpdates    GoalUpdate[]
+  announcements  Announcement[]
+  comments       Comment[]
+  reactions      Reaction[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+}
+
+model RefreshToken {
   id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  avatar    String?
-  role      String   @default("MEMBER")
+  jti       String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
   createdAt DateTime @default(now())
-  memberships Membership[]
-  goals       Goal[]
-  tasks       Task[]
+
+  @@index([userId])
 }
 
 model Workspace {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  color       String
-  createdAt   DateTime @default(now())
-  members Membership[]
-  goals   Goal[]
-  posts   Announcement[]
-  tasks   Task[]
+  id           String         @id @default(cuid())
+  name         String
+  description  String?
+  accentColor  String         @default("#6366f1")
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  members      Membership[]
+  goals        Goal[]
+  posts        Announcement[]
+  tasks        Task[]
+  notifications Notification[]
+  auditLogs    AuditLog[]
 }
 
 model Membership {
-  id String @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
   workspaceId String
-  role        String
-  user      User      @relation(fields: [userId], references: [id])
-  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  role        Role      @default(MEMBER)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
 }
 
 model Goal {
-  id      String    @id @default(cuid())
-  title   String
-  status  String
-  dueDate DateTime?
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  status      GoalStatus   @default(PLANNED)
+  dueDate     DateTime?
   ownerId     String
   workspaceId String
-  owner     User      @relation(fields: [ownerId], references: [id])
-  workspace Workspace @relation(fields: [workspaceId], references: [id])
-  milestones Milestone[]
-  tasks      Task[]
+  owner       User         @relation("GoalOwner", fields: [ownerId], references: [id])
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  milestones  Milestone[]
+  tasks       Task[]
+  updates     GoalUpdate[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([workspaceId])
+  @@index([ownerId])
 }
 
 model Milestone {
-  id       String @id @default(cuid())
-  title    String
-  progress Int
-  goalId String
-  goal   Goal   @relation(fields: [goalId], references: [id])
+  id                  String   @id @default(cuid())
+  title               String
+  progressPercentage  Int      @default(0)
+  goalId              String
+  goal                Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([goalId])
+}
+
+model GoalUpdate {
+  id        String   @id @default(cuid())
+  body      String
+  goalId    String
+  authorId  String
+  goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([goalId])
 }
 
 model Announcement {
-  id      String  @id @default(cuid())
-  title   String
-  content String
-  pinned  Boolean @default(false)
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  pinned      Boolean   @default(false)
   workspaceId String
-  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  authorId    String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  author      User      @relation(fields: [authorId], references: [id])
+  comments    Comment[]
+  reactions   Reaction[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([workspaceId])
+}
+
+model Comment {
+  id              String       @id @default(cuid())
+  body            String
+  announcementId  String
+  authorId        String
+  announcement    Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  author          User         @relation(fields: [authorId], references: [id])
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([announcementId])
+}
+
+model Reaction {
+  id              String       @id @default(cuid())
+  emoji           String
+  announcementId  String
+  userId          String
+  announcement    Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, userId, emoji])
 }
 
 model Task {
-  id       String    @id @default(cuid())
-  title    String
-  priority String
-  status   String
-  dueDate  DateTime?
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  priority    Priority    @default(MEDIUM)
+  status      TaskStatus  @default(TODO)
+  dueDate     DateTime?
   assigneeId  String?
   workspaceId String
   goalId      String?
-  assignee  User?     @relation(fields: [assigneeId], references: [id])
-  workspace Workspace @relation(fields: [workspaceId], references: [id])
-  goal      Goal?     @relation(fields: [goalId], references: [id])
+  assignee    User?       @relation(fields: [assigneeId], references: [id])
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  goal        Goal?       @relation(fields: [goalId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([workspaceId])
+  @@index([goalId])
+  @@index([assigneeId])
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  workspaceId String?
+  type        NotificationType
+  title       String
+  body        String?
+  read        Boolean          @default(false)
+  meta        Json?
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace?       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime         @default(now())
+
+  @@index([userId, read])
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  workspaceId String
+  actorId     String
+  action      String
+  metadata    Json?
+  actor       User      @relation(fields: [actorId], references: [id])
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@index([workspaceId])
+  @@index([createdAt])
 }

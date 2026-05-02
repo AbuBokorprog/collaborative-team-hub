@@ -3,6 +3,19 @@ import path from 'path'
 
 dotenv.config({ path: path.join(process.cwd(), '.env') })
 
+const port = Number(process.env.PORT) || 5000
+
 export default {
-  port: process.env.PORT,
+  node_env: process.env.NODE_ENV ?? 'development',
+  port,
+  client_url: process.env.CLIENT_URL ?? 'http://localhost:3000',
+  salt: process.env.SALT ?? '10',
+  access_token: process.env.JWT_ACCESS_SECRET ?? process.env.ACCESS_TOKEN,
+  access_expiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? process.env.EXPIRES_IN ?? '15m',
+  refresh_token: process.env.JWT_REFRESH_SECRET ?? process.env.REFRESH_TOKEN,
+  refresh_expiresIn:
+    process.env.JWT_REFRESH_EXPIRES_IN ?? process.env.REFRESH_EXPIRES_IN ?? '7d',
+  cloudinary_cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  cloudinary_api_key: process.env.CLOUDINARY_API_KEY,
+  cloudinary_secret_key: process.env.CLOUDINARY_API_SECRET,
 }
