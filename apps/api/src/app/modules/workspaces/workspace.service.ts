@@ -168,3 +168,24 @@ export const removeMember = async (workspaceId: string, targetUserId: string) =>
     },
   })
 }
+
+export const stats = async (workspaceId: string) => {
+  const [members, goals, completedGoals, tasks, completedTasks, announcements] =
+    await Promise.all([
+      prisma.membership.count({ where: { workspaceId } }),
+      prisma.goal.count({ where: { workspaceId } }),
+      prisma.goal.count({ where: { workspaceId, status: 'COMPLETED' } }),
+      prisma.task.count({ where: { workspaceId } }),
+      prisma.task.count({ where: { workspaceId, status: 'DONE' } }),
+      prisma.announcement.count({ where: { workspaceId } }),
+    ])
+
+  return {
+    members,
+    goals,
+    completedGoals,
+    tasks,
+    completedTasks,
+    announcements,
+  }
+}

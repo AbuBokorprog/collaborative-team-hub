@@ -119,6 +119,18 @@ const removeMember = CatchAsync(async (req, res) => {
   })
 })
 
+const stats = CatchAsync(async (req, res) => {
+  const workspaceId = req.workspaceId as string
+  const data = await workspaceService.stats(workspaceId)
+
+  SuccessResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Workspace stats',
+    data,
+  })
+})
+
 export const workspaceController = {
   list,
   create,
@@ -129,4 +141,5 @@ export const workspaceController = {
   members,
   updateMember,
   removeMember,
+  stats,
 }

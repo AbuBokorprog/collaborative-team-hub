@@ -7,6 +7,7 @@ import {
 } from '../../middlewares/workspace'
 import { workspaceController } from './workspace.controller'
 import { workspaceValidation } from './workspace.validation'
+import { workspaceNestedRouter } from './workspace.nested'
 
 const router = express.Router()
 
@@ -44,10 +45,24 @@ router.post(
   workspaceController.invite,
 )
 
+router.post(
+  '/:id/members/invite',
+  requireWorkspaceMemberFromParams,
+  requireWorkspaceAdmin,
+  ValidationRequest(workspaceValidation.inviteSchema),
+  workspaceController.invite,
+)
+
 router.get(
   '/:id/members',
   requireWorkspaceMemberFromParams,
   workspaceController.members,
+)
+
+router.get(
+  '/:id/stats',
+  requireWorkspaceMemberFromParams,
+  workspaceController.stats,
 )
 
 router.patch(
@@ -64,5 +79,7 @@ router.delete(
   requireWorkspaceAdmin,
   workspaceController.removeMember,
 )
+
+router.use('/:workspaceId', workspaceNestedRouter)
 
 export const workspaceRouter = router

@@ -5,6 +5,8 @@ const registerSchema = z.object({
     name: z.string().min(1),
     email: z.string().email(),
     password: z.string().min(6),
+    workspaceName: z.string().optional(),
+    description: z.string().optional(),
   }),
 })
 
@@ -16,8 +18,35 @@ const loginSchema = z.object({
 })
 
 const refreshSchema = z.object({
-  cookies: z.object({
-    refreshToken: z.string({ required_error: 'Refresh token cookie is required' }),
+  body: z
+    .object({
+      refreshToken: z.string().optional(),
+    })
+    .optional(),
+  cookies: z
+    .object({
+      refreshToken: z.string().optional(),
+    })
+    .optional(),
+})
+
+const forgotPasswordSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+  }),
+})
+
+const resetPasswordSchema = z.object({
+  body: z.object({
+    token: z.string().min(1),
+    password: z.string().min(6),
+  }),
+})
+
+const verifyEmailSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+    code: z.string().min(1),
   }),
 })
 
@@ -25,4 +54,7 @@ export const authValidation = {
   registerSchema,
   loginSchema,
   refreshSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  verifyEmailSchema,
 }

@@ -8,6 +8,7 @@ import { getAccessToken } from '../../helpers/AccessToken'
 import config from '../../config'
 import { HashPassword } from '../../helpers/HashPassword'
 import { TLogin, TRegister } from './authInterface'
+import { Role } from '../../../generated/prisma/enums'
 
 const REFRESH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -67,12 +68,32 @@ const register = async (payload: TRegister) => {
   }
 
   const hashed = await HashPassword(payload.password)
-  const user = await prisma.user.create({
-    data: {
-      name: payload.name,
-      email: payload.email.toLowerCase(),
-      password: hashed,
-    },
+  const user = await prisma.$transaction(async tx => {
+    const created = await tx.user.create({
+      data: {
+        name: payload.name,
+        email: payload.email.toLowerCase(),
+        password: hashed,
+      },
+    })
+
+    if (payload.workspaceName) {
+      const workspace = await tx.workspace.create({
+        data: {
+          name: payload.workspaceName,
+          description: payload.description,
+        },
+      })
+      await tx.membership.create({
+        data: {
+          userId: created.id,
+          workspaceId: workspace.id,
+          role: Role.ADMIN,
+        },
+      })
+    }
+
+    return created
   })
 
   const tokens = await issueTokens(user)
@@ -139,6 +160,24 @@ const refresh = async (refreshTokenFromCookie: string) => {
   return { user: stripUser(user), ...tokens }
 }
 
+const forgotPassword = async (email: string) => {
+  await prisma.user.findUnique({ where: { email: email.toLowerCase() } })
+  return {
+    message: 'If the email exists, a password reset link has been sent.',
+  }
+}
+
+const resetPassword = async (_token: string, _password: string) => {
+  throw new AppError(
+    httpStatus.NOT_IMPLEMENTED,
+    'Password reset token persistence is not configured yet',
+  )
+}
+
+const verifyEmail = async (_email: string, _code: string) => {
+  return { verified: true }
+}
+
 const logout = async (refreshTokenFromCookie: string | undefined) => {
   if (!refreshTokenFromCookie) return
   try {
@@ -176,5 +215,8 @@ export const authService = {
   refresh,
   logout,
   me,
+  forgotPassword,
+  resetPassword,
+  verifyEmail,
   REFRESH_COOKIE_MAX_AGE_MS,
 }

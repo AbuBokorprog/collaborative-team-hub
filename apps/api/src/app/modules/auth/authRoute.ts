@@ -21,6 +21,21 @@ route.post(
   ValidationRequest(authValidation.refreshSchema),
   authController.refresh,
 )
+route.post(
+  '/forgot-password',
+  ValidationRequest(authValidation.forgotPasswordSchema),
+  authController.forgotPassword,
+)
+route.post(
+  '/reset-password',
+  ValidationRequest(authValidation.resetPasswordSchema),
+  authController.resetPassword,
+)
+route.post(
+  '/verify-email',
+  ValidationRequest(authValidation.verifyEmailSchema),
+  authController.verifyEmail,
+)
 route.post('/logout', authController.logout)
 route.get('/me', Auth(), authController.me)
 
