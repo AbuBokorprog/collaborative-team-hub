@@ -39,14 +39,20 @@ const forgotPasswordSchema = z.object({
 const resetPasswordSchema = z.object({
   body: z.object({
     token: z.string().min(1),
-    password: z.string().min(6),
+    newPassword: z.string().min(6),
   }),
 })
 
 const verifyEmailSchema = z.object({
   body: z.object({
-    email: z.string().email(),
-    code: z.string().min(1),
+    token: z.string().min(1),
+  }),
+})
+
+const changePasswordSchema = z.object({
+  body: z.object({
+    oldPassword: z.string().min(1),
+    newPassword: z.string().min(6),
   }),
 })
 
@@ -57,4 +63,5 @@ export const authValidation = {
   forgotPasswordSchema,
   resetPasswordSchema,
   verifyEmailSchema,
+  changePasswordSchema,
 }

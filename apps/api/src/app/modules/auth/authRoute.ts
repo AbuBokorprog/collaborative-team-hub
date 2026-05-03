@@ -36,6 +36,12 @@ route.post(
   ValidationRequest(authValidation.verifyEmailSchema),
   authController.verifyEmail,
 )
+route.post(
+  '/change-password',
+  Auth(),
+  ValidationRequest(authValidation.changePasswordSchema),
+  authController.changePassword,
+)
 route.post('/logout', authController.logout)
 route.get('/me', Auth(), authController.me)
 

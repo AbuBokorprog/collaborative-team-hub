@@ -17,8 +17,13 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 import { Avatar } from "../ui/avatar";
+import { Button } from "../ui/button";
+import { Input } from "../ui/Input";
+import { Modal } from "./modal";
 
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
@@ -46,8 +51,28 @@ export default function Sidebar() {
     logout,
     users,
   } = useAppStore();
+  const { createWorkspace } = useAppStore();
   const [wsOpen, setWsOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const {
+    formState: { isSubmitting: creating },
+    handleSubmit: handleCreateSubmit,
+    register: registerCreate,
+    reset: resetCreate,
+  } = useForm({ defaultValues: { name: "", description: "" } });
   const onlineUsers = users.filter((u) => u.online && u.id !== currentUser?.id);
+
+  const handleCreateWorkspace = async (values) => {
+    const result = await createWorkspace(values);
+    if (result?.ok === false) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Workspace created");
+    resetCreate();
+    setCreateOpen(false);
+    setWsOpen(false);
+  };
 
   return (
     <>
@@ -146,7 +171,10 @@ export default function Sidebar() {
                   </button>
                 ))}
                 <div className="border-t border-white/5 p-1">
-                  <button className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-[var(--sidebar-muted)] hover:text-[var(--sidebar-text)] rounded-lg hover:bg-white/5 transition-colors">
+                  <button
+                    onClick={() => { setWsOpen(false); setCreateOpen(true); }}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-[var(--sidebar-muted)] hover:text-[var(--sidebar-text)] rounded-lg hover:bg-white/5 transition-colors"
+                  >
                     <Plus className="w-3.5 h-3.5" /> New Workspace
                   </button>
                 </div>
@@ -265,6 +293,44 @@ export default function Sidebar() {
           )}
         </button>
       </aside>
+
+      <Modal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Create New Workspace"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCreateOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              loading={creating}
+              onClick={handleCreateSubmit(handleCreateWorkspace)}
+            >
+              Create Workspace
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input
+            label="Workspace name"
+            {...registerCreate("name", { required: true })}
+            placeholder="e.g. Marketing Team"
+          />
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-[var(--text-primary)]">
+              Description
+            </label>
+            <textarea
+              rows={3}
+              {...registerCreate("description")}
+              placeholder="What is this workspace for?"
+              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
+            />
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }

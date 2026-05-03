@@ -28,5 +28,21 @@ export const announcementApi = {
       { method: "PATCH" },
     );
   },
+
+  getComments(workspaceId, announcementId) {
+    return apiRequest(
+      `/workspaces/${workspaceId}/announcements/${announcementId}/comments`,
+    );
+  },
+
+  comment(workspaceId, announcementId, body) {
+    return apiRequest(
+      `/workspaces/${workspaceId}/announcements/${announcementId}/comments`,
+      {
+        method: "POST",
+        body: { body },
+      },
+    );
+  },
 };
 

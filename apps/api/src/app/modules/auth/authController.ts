@@ -95,7 +95,6 @@ const me = CatchAsync(async (req, res) => {
 
 const forgotPassword = CatchAsync(async (req, res) => {
   const data = await authService.forgotPassword(req.body.email)
-
   SuccessResponse(res, {
     status: httpStatus.OK,
     success: true,
@@ -105,18 +104,29 @@ const forgotPassword = CatchAsync(async (req, res) => {
 })
 
 const resetPassword = CatchAsync(async (req, res) => {
-  const data = await authService.resetPassword(req.body.token, req.body.password)
+  const data = await authService.resetPassword(req.body)
 
   SuccessResponse(res, {
     status: httpStatus.OK,
     success: true,
-    message: 'Password reset',
+    message: 'Password reset successfully!',
+    data,
+  })
+})
+
+const changePassword = CatchAsync(async (req, res) => {
+  const data = await authService.changePassword(req.user, req.body)
+
+  SuccessResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Password changed successfully',
     data,
   })
 })
 
 const verifyEmail = CatchAsync(async (req, res) => {
-  const data = await authService.verifyEmail(req.body.email, req.body.code)
+  const data = await authService.verifyEmail(req.body.token)
 
   SuccessResponse(res, {
     status: httpStatus.OK,
@@ -134,5 +144,6 @@ export const authController = {
   me,
   forgotPassword,
   resetPassword,
+  changePassword,
   verifyEmail,
 }

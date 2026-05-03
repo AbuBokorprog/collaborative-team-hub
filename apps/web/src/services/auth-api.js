@@ -31,6 +31,37 @@ export const authApi = {
     return apiRequest("/auth/me");
   },
 
+  forgotPassword(email) {
+    return apiRequest("/auth/forgot-password", {
+      method: "POST",
+      body: { email },
+      retryOnUnauthorized: false,
+    });
+  },
+
+  resetPassword({ token, newPassword }) {
+    return apiRequest("/auth/reset-password", {
+      method: "POST",
+      body: { token, newPassword },
+      retryOnUnauthorized: false,
+    });
+  },
+
+  verifyEmail(token) {
+    return apiRequest("/auth/verify-email", {
+      method: "POST",
+      body: { token },
+      retryOnUnauthorized: false,
+    });
+  },
+
+  changePassword(payload) {
+    return apiRequest("/auth/change-password", {
+      method: "POST",
+      body: payload,
+    });
+  },
+
   async logout() {
     try {
       await apiRequest("/auth/logout", {
@@ -42,4 +73,3 @@ export const authApi = {
     }
   },
 };
-

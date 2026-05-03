@@ -3,6 +3,13 @@ import prisma from '../../helpers/prisma'
 import { AppError } from '../../utils/AppError'
 import { writeAuditLog } from '../../helpers/auditLog'
 import { Role } from '../../../generated/prisma/enums'
+import { HashPassword } from '../../helpers/HashPassword'
+import { SendMail } from '../../utils/SendMail'
+import config from '../../config'
+import {
+  authEmailTemplates,
+} from '../auth/authConstants'
+import { createTemporaryPassword } from '../auth/authService'
 
 export const listForUser = async (userId: string) => {
   const rows = await prisma.membership.findMany({
@@ -88,12 +95,24 @@ export const inviteMember = async (
   payload: { email: string; role?: Role },
 ) => {
   const email = payload.email.toLowerCase()
-  const target = await prisma.user.findUnique({ where: { email } })
+  const workspace = await prisma.workspace.findUniqueOrThrow({
+    where: { id: workspaceId },
+    select: { name: true },
+  })
+
+  let temporaryPassword: string | null = null
+  let target = await prisma.user.findUnique({ where: { email } })
+
   if (!target) {
-    throw new AppError(
-      httpStatus.NOT_FOUND,
-      'No user with this email. They must register first.',
-    )
+    temporaryPassword = createTemporaryPassword()
+    target = await prisma.user.create({
+      data: {
+        name: email.split('@')[0],
+        email,
+        password: await HashPassword(temporaryPassword),
+        status: 'ACTIVE',
+      },
+    })
   }
 
   const existing = await prisma.membership.findUnique({
@@ -120,6 +139,20 @@ export const inviteMember = async (
     actorId,
     action: 'USER_INVITED',
     metadata: { invitedUserId: target.id, email },
+  })
+
+  await SendMail({
+    to: email,
+    subject: `Invitation to ${workspace.name}`,
+    html: authEmailTemplates.invitation(
+      workspace.name,
+      email,
+      temporaryPassword ?? 'Use your existing Team Hub password',
+      `${config.client_url}/login`,
+    ),
+    text: temporaryPassword
+      ? `You were invited to ${workspace.name}. Email: ${email}. Temporary password: ${temporaryPassword}. Login: ${config.client_url}/login`
+      : `You were invited to ${workspace.name}. Login with your existing Team Hub password: ${config.client_url}/login`,
   })
 
   return membership

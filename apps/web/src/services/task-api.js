@@ -24,5 +24,18 @@ export const taskApi = {
       body: { column },
     });
   },
+
+  update(workspaceId, taskId, payload) {
+    return apiRequest(`/workspaces/${workspaceId}/tasks/${taskId}`, {
+      method: "PATCH",
+      body: payload,
+    });
+  },
+
+  remove(workspaceId, taskId) {
+    return apiRequest(`/workspaces/${workspaceId}/tasks/${taskId}`, {
+      method: "DELETE",
+    });
+  },
 };
 

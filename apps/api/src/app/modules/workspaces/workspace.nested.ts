@@ -488,3 +488,37 @@ workspaceNestedRouter.get(
     SuccessResponse(res, { status: httpStatus.OK, success: true, message: 'Activity heatmap', data })
   }),
 )
+
+workspaceNestedRouter.get(
+  '/analytics/task-completion',
+  CatchAsync(async (req, res) => {
+    const wsId = workspaceId(req)
+    const now = new Date()
+    const months = await Promise.all(
+      [...Array(6)].map(async (_, i) => {
+        const start = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
+        const end = new Date(now.getFullYear(), now.getMonth() - (5 - i) + 1, 0, 23, 59, 59, 999)
+        const label = start.toLocaleString('en-US', { month: 'short' })
+        const [created, completed] = await Promise.all([
+          prisma.task.count({ where: { workspaceId: wsId, createdAt: { gte: start, lte: end } } }),
+          prisma.task.count({ where: { workspaceId: wsId, status: TaskStatus.DONE, updatedAt: { gte: start, lte: end } } }),
+        ])
+        return { month: label, created, completed }
+      }),
+    )
+    SuccessResponse(res, { status: httpStatus.OK, success: true, message: 'Task completion chart', data: { months } })
+  }),
+)
+
+workspaceNestedRouter.get(
+  '/analytics/recent-activity',
+  CatchAsync(async (req, res) => {
+    const data = await prisma.auditLog.findMany({
+      where: { workspaceId: workspaceId(req) },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      include: { actor: { select: { id: true, name: true, avatar: true } } },
+    })
+    SuccessResponse(res, { status: httpStatus.OK, success: true, message: 'Recent activity', data })
+  }),
+)

@@ -216,6 +216,8 @@ export default function TasksPage() {
   const {
     activeWorkspace,
     addTask,
+    goals,
+    loadGoals,
     loadTasks,
     moveTask,
     setTaskView,
@@ -238,31 +240,33 @@ export default function TasksPage() {
       title: "",
       desc: "",
       priority: "medium",
-      label: "Frontend",
+      goalId: "",
       dueDate: "",
     },
   });
   const priority = useWatch({ control, name: "priority" });
-  const label = useWatch({ control, name: "label" });
+  const goalId = useWatch({ control, name: "goalId" });
 
   const totalTasks = Object.values(tasks).flat().length;
 
   useEffect(() => {
-    if (activeWorkspace?.id) {
-      loadTasks(activeWorkspace.id).then((result) => {
-        if (result?.ok === false) {
-          toast.error(result.error);
-        }
-      });
-    }
-  }, [activeWorkspace?.id, loadTasks]);
+    if (!activeWorkspace?.id) return;
+    loadTasks(activeWorkspace.id).then((result) => {
+      if (result?.ok === false) toast.error(result.error);
+    });
+    loadGoals(activeWorkspace.id);
+  }, [activeWorkspace?.id, loadGoals, loadTasks]);
 
   const handleAddTask = (col) => {
     setTargetCol(col);
     setAddOpen(true);
   };
   const handleCreate = async (values) => {
-    const result = await addTask(targetCol, { ...values, assignee: users[0] });
+    const result = await addTask(targetCol, {
+      ...values,
+      goalId: values.goalId || undefined,
+      assignee: users[0],
+    });
 
     if (result?.ok === false) {
       toast.error(result.error);
@@ -270,13 +274,7 @@ export default function TasksPage() {
     }
 
     toast.success("Task created");
-    reset({
-      title: "",
-      desc: "",
-      priority: "medium",
-      label: "Frontend",
-      dueDate: "",
-    });
+    reset({ title: "", desc: "", priority: "medium", goalId: "", dueDate: "" });
     setAddOpen(false);
   };
 
@@ -391,18 +389,13 @@ export default function TasksPage() {
               onChange={(v) => setValue("priority", v)}
             />
             <Select
-              label="Label"
+              label="Goal (optional)"
               options={[
-                "Frontend",
-                "Backend",
-                "Design",
-                "Product",
-                "DevOps",
-                "Marketing",
-                "Security",
-              ].map((l) => ({ value: l, label: l }))}
-              value={label}
-              onChange={(v) => setValue("label", v)}
+                { value: "", label: "No goal" },
+                ...goals.map((g) => ({ value: g.id, label: g.title })),
+              ]}
+              value={goalId}
+              onChange={(v) => setValue("goalId", v)}
             />
           </div>
           <Input

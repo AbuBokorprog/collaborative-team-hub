@@ -28,6 +28,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useState, useRef } from "react";
+import { toast } from "sonner";
 
 import Header from "@/components/common/header";
 import { Modal } from "@/components/common/modal";
@@ -39,6 +40,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { authApi } from "@/services/auth-api";
 import { useAppStore } from "@/store/useAppStore";
 
 /* ─── Section wrapper ─────────────────────────────── */
@@ -139,6 +141,7 @@ export default function ProfilePage() {
   const [editMode, setEditMode] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const fileRef = useRef(null);
 
@@ -165,8 +168,15 @@ export default function ProfilePage() {
     pushAnnouncements: true,
     desktopSound: false,
   });
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const updatePasswordField = (key, value) =>
+    setPasswordForm((form) => ({ ...form, [key]: value }));
   const toggleNotif = (k) => setNotifSettings((s) => ({ ...s, [k]: !s[k] }));
 
   const handleSave = async () => {
@@ -175,6 +185,41 @@ export default function ProfilePage() {
       setSaved(false);
       setEditMode(false);
     }, 1500);
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordForm.oldPassword || !passwordForm.newPassword) {
+      toast.error("Current and new password are required.");
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters.");
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("New password and confirmation do not match.");
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      await authApi.changePassword({
+        oldPassword: passwordForm.oldPassword,
+        newPassword: passwordForm.newPassword,
+      });
+      setPasswordForm({
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      toast.success("Password updated");
+    } catch (error) {
+      toast.error(error.message || "Unable to update password.");
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const stats = [
@@ -585,10 +630,15 @@ export default function ProfilePage() {
                     <div className="relative">
                       <input
                         type={showPass ? "text" : "password"}
+                        value={passwordForm.oldPassword}
+                        onChange={(e) =>
+                          updatePasswordField("oldPassword", e.target.value)
+                        }
                         placeholder="••••••••"
                         className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 pr-10 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
                       />
                       <button
+                        type="button"
                         onClick={() => setShowPass(!showPass)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
                       >
@@ -604,16 +654,31 @@ export default function ProfilePage() {
                     <Input
                       label="New password"
                       type="password"
+                      value={passwordForm.newPassword}
+                      onChange={(e) =>
+                        updatePasswordField("newPassword", e.target.value)
+                      }
                       placeholder="••••••••"
                     />
                     <Input
                       label="Confirm password"
                       type="password"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) =>
+                        updatePasswordField("confirmPassword", e.target.value)
+                      }
                       placeholder="••••••••"
                     />
                   </div>
-                  <Button size="sm" icon={<Lock className="w-3.5 h-3.5" />}>
-                    Update Password
+                  <Button
+                    size="sm"
+                    loading={changingPassword}
+                    icon={
+                      !changingPassword && <Lock className="w-3.5 h-3.5" />
+                    }
+                    onClick={handleChangePassword}
+                  >
+                    {changingPassword ? "Updating..." : "Update Password"}
                   </Button>
                 </div>
               </Card>

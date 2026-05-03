@@ -214,12 +214,12 @@ export default function Login() {
                   Remember me
                 </span>
               </label>
-              <button
-                type="button"
+              <Link
+                href="/forgot-password"
                 className="text-sm text-[var(--accent)] hover:underline"
               >
                 Forgot password?
-              </button>
+              </Link>
             </div>
 
             <Button

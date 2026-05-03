@@ -1,5 +1,5 @@
 import httpStatus from 'http-status'
-import { randomUUID } from 'crypto'
+import { randomBytes, randomUUID } from 'crypto'
 import jwt, { JwtPayload } from 'jsonwebtoken'
 import { ComparePassword } from '../../helpers/ComparePassword'
 import prisma from '../../helpers/prisma'
@@ -9,6 +9,8 @@ import config from '../../config'
 import { HashPassword } from '../../helpers/HashPassword'
 import { TLogin, TRegister } from './authInterface'
 import { Role } from '../../../generated/prisma/enums'
+import { SendMail } from '../../utils/SendMail'
+import { authEmailTemplates } from './authConstants'
 
 const REFRESH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -45,7 +47,10 @@ const issueTokens = async (user: {
   const decoded = jwt.decode(refreshToken) as JwtPayload
   const expSec = decoded.exp
   if (!expSec) {
-    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Could not issue refresh token')
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Could not issue refresh token',
+    )
   }
 
   await prisma.refreshToken.create({
@@ -96,6 +101,19 @@ const register = async (payload: TRegister) => {
     return created
   })
 
+  const verifyToken = await getAccessToken(
+    { id: user.id, email: user.email, type: 'verify-email' },
+    config.access_token as string,
+    '24h',
+  )
+  const verifyLink = `${config.client_url}/verify-email?token=${verifyToken}`
+  await SendMail({
+    to: user.email,
+    subject: 'Verify your Team Hub email',
+    html: authEmailTemplates.verifyEmail(user.name, verifyLink),
+    text: `Verify your email: ${verifyLink}`,
+  })
+
   const tokens = await issueTokens(user)
   return { user: stripUser(user), ...tokens }
 }
@@ -138,7 +156,10 @@ const refresh = async (refreshTokenFromCookie: string) => {
   })
 
   if (!stored || stored.userId !== decoded.id) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'Refresh token revoked or invalid')
+    throw new AppError(
+      httpStatus.UNAUTHORIZED,
+      'Refresh token revoked or invalid',
+    )
   }
 
   if (stored.expiresAt < new Date()) {
@@ -160,23 +181,161 @@ const refresh = async (refreshTokenFromCookie: string) => {
   return { user: stripUser(user), ...tokens }
 }
 
-const forgotPassword = async (email: string) => {
-  await prisma.user.findUnique({ where: { email: email.toLowerCase() } })
-  return {
-    message: 'If the email exists, a password reset link has been sent.',
-  }
-}
+const changePassword = async (
+  user: any,
+  payload: { newPassword: string; oldPassword: string },
+) => {
+  const isExistUser = await prisma.user.findUniqueOrThrow({
+    where: { id: user?.id, status: 'ACTIVE' },
+  })
 
-const resetPassword = async (_token: string, _password: string) => {
-  throw new AppError(
-    httpStatus.NOT_IMPLEMENTED,
-    'Password reset token persistence is not configured yet',
+  const isMatchedPassword = await ComparePassword(
+    payload.oldPassword,
+    isExistUser?.password,
   )
+
+  if (!isMatchedPassword) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Old password not matched!')
+  }
+
+  const newHashedPassword = await HashPassword(payload.newPassword)
+  const result = await prisma.user.update({
+    where: {
+      id: user?.id,
+    },
+    data: {
+      password: newHashedPassword,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatar: true,
+    },
+  })
+
+  await prisma.refreshToken.deleteMany({ where: { userId: user?.id } })
+
+  return stripUser(result)
 }
 
-const verifyEmail = async (_email: string, _code: string) => {
-  return { verified: true }
+const forgotPassword = async (email: string) => {
+  const isExistUser = await prisma.user.findFirst({
+    where: {
+      email: email.toLocaleLowerCase(),
+      status: 'ACTIVE',
+    },
+  })
+
+  if (!isExistUser) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'User not found please register your account!',
+    )
+  }
+
+  const resetTokenData = {
+    email: isExistUser.email,
+    name: isExistUser.name,
+    id: isExistUser.id,
+  }
+
+  const resetToken = await getAccessToken(
+    { ...resetTokenData, type: 'reset-password' },
+    config.access_token as string,
+    '15m',
+  )
+
+  const resetLink = `${config.client_url}/reset-password?token=${resetToken}`
+
+  const data = await SendMail({
+    to: 'abubokoras143@gmail.com',
+    subject: 'Reset your Team Hub password',
+    html: authEmailTemplates.resetPassword(isExistUser.name, resetLink),
+    text: `Reset your password: ${resetLink}`,
+  })
+  console.log('data', data)
+  return { email: isExistUser.email }
 }
+
+const resetPassword = async (payload: {
+  newPassword: string
+  token: string
+}) => {
+  let decoded: JwtPayload & { id?: string; email?: string; type?: string }
+  try {
+    decoded = jwt.verify(
+      payload.token,
+      config.access_token as string,
+    ) as JwtPayload & {
+      id?: string
+      email?: string
+      type?: string
+    }
+  } catch {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Token expired!')
+  }
+
+  if (!decoded.id || !decoded.email || decoded.type !== 'reset-password') {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'User unauthorized!')
+  }
+
+  const newHashedPassword = await HashPassword(payload.newPassword)
+
+  const result = await prisma.user.update({
+    where: {
+      id: decoded.id,
+      email: decoded.email,
+    },
+    data: {
+      password: newHashedPassword,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatar: true,
+    },
+  })
+
+  await prisma.refreshToken.deleteMany({ where: { userId: decoded.id } })
+
+  return stripUser(result)
+}
+
+const verifyEmail = async (token: string) => {
+  let decoded: JwtPayload & { id?: string; email?: string; type?: string }
+  try {
+    decoded = jwt.verify(token, config.access_token as string) as JwtPayload & {
+      id?: string
+      email?: string
+      type?: string
+    }
+  } catch {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Verification link expired!')
+  }
+
+  if (!decoded.id || !decoded.email || decoded.type !== 'verify-email') {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid verification link')
+  }
+
+  const user = await prisma.user.update({
+    where: { id: decoded.id, email: decoded.email },
+    data: { status: 'ACTIVE' },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatar: true,
+      status: true,
+    },
+  })
+
+  return { verified: true, user }
+}
+
+export const createTemporaryPassword = () =>
+  randomBytes(9).toString('base64url')
 
 const logout = async (refreshTokenFromCookie: string | undefined) => {
   if (!refreshTokenFromCookie) return
@@ -215,6 +374,7 @@ export const authService = {
   refresh,
   logout,
   me,
+  changePassword,
   forgotPassword,
   resetPassword,
   verifyEmail,

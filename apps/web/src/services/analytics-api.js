@@ -12,5 +12,13 @@ export const analyticsApi = {
   activity(workspaceId) {
     return apiRequest(`/workspaces/${workspaceId}/analytics/activity`);
   },
+
+  taskCompletion(workspaceId) {
+    return apiRequest(`/workspaces/${workspaceId}/analytics/task-completion`);
+  },
+
+  recentActivity(workspaceId) {
+    return apiRequest(`/workspaces/${workspaceId}/analytics/recent-activity`);
+  },
 };
 

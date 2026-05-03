@@ -11,8 +11,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
+
+const ACTION_LABELS = {
+  TASK_CREATED: "created a task",
+  TASK_UPDATED: "updated a task",
+  GOAL_CREATED: "created a goal",
+  GOAL_UPDATED: "updated a goal",
+  ANNOUNCEMENT_PINNED: "pinned an announcement",
+  WORKSPACE_UPDATED: "updated workspace settings",
+  MEMBER_INVITED: "invited a team member",
+  MEMBER_REMOVED: "removed a team member",
+};
+
+function formatAction(action) {
+  return ACTION_LABELS[action] || action.toLowerCase().replace(/_/g, " ");
+}
 
 const ROLES = [
   { value: "ADMIN", label: "Admin" },
@@ -31,15 +46,25 @@ const ROLE_COLORS = {
 export default function Workspace() {
   const {
     activeWorkspace,
+    createWorkspace,
     inviteMember,
+    loadWorkspaceActivity,
     loadWorkspaceDetails,
     updateWorkspace,
+    workspaceActivity,
     workspaceStats,
     workspaces,
     users,
   } = useAppStore();
   const [activeTab, setActiveTab] = useState("overview");
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [createWsOpen, setCreateWsOpen] = useState(false);
+  const {
+    formState: { isSubmitting: creatingWs },
+    handleSubmit: handleCreateWsSubmit,
+    register: registerCreateWs,
+    reset: resetCreateWs,
+  } = useForm({ defaultValues: { name: "", description: "" } });
   const {
     formState: { isSubmitting: inviting },
     control: inviteControl,
@@ -78,7 +103,20 @@ export default function Workspace() {
         toast.error(result.error);
       }
     });
-  }, [activeWorkspace, loadWorkspaceDetails, resetWorkspace]);
+
+    loadWorkspaceActivity(activeWorkspace.id);
+  }, [activeWorkspace, loadWorkspaceActivity, loadWorkspaceDetails, resetWorkspace]);
+
+  const handleCreateWorkspace = async (values) => {
+    const result = await createWorkspace(values);
+    if (result?.ok === false) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Workspace created");
+    resetCreateWs();
+    setCreateWsOpen(false);
+  };
 
   const handleInvite = async (values) => {
     const result = await inviteMember(values);
@@ -225,7 +263,10 @@ export default function Workspace() {
                       )}
                     </div>
                   ))}
-                  <button className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-[var(--border)] text-sm text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all">
+                  <button
+                    onClick={() => setCreateWsOpen(true)}
+                    className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-[var(--border)] text-sm text-[var(--text-muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all"
+                  >
                     <Plus className="w-4 h-4" /> Create new workspace
                   </button>
                 </div>
@@ -235,64 +276,32 @@ export default function Workspace() {
                 <h3 className="font-semibold text-[var(--text-primary)] mb-4">
                   Recent Activity
                 </h3>
-                <div className="space-y-3">
-                  {[
-                    {
-                      user: users[1],
-                      action: "completed",
-                      item: "Mobile responsive fixes",
-                      time: "2m ago",
-                    },
-                    {
-                      user: users[3],
-                      action: "moved to review",
-                      item: "Auth 2FA integration",
-                      time: "15m ago",
-                    },
-                    {
-                      user: users[0],
-                      action: "updated goal",
-                      item: "Q1 Platform Launch → 68%",
-                      time: "1h ago",
-                    },
-                    {
-                      user: users[2],
-                      action: "commented on",
-                      item: "API rate limiting",
-                      time: "3h ago",
-                    },
-                    {
-                      user: users[4],
-                      action: "posted announcement",
-                      item: "Q1 Planning Week Kickoff",
-                      time: "5h ago",
-                    },
-                  ].map((a, i) => {
-                    console.log("a", a);
-                    return (
-                      <div key={i} className="flex items-start gap-3">
-                        <Avatar user={a.user} size="sm" />
+                {workspaceActivity.length === 0 ? (
+                  <p className="text-sm text-[var(--text-muted)] text-center py-4">
+                    No recent activity yet
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {workspaceActivity.map((item) => (
+                      <div key={item.id} className="flex items-start gap-3">
+                        <Avatar user={item.actor} size="sm" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-[var(--text-primary)]">
                             <span className="font-medium">
-                              {/* {a.user.name.split(" ")[0]} */}
-                              test
+                              {item.actor?.name?.split(" ")[0] ?? "Someone"}
                             </span>{" "}
                             <span className="text-[var(--text-muted)]">
-                              {a.action}
-                            </span>{" "}
-                            <span className="font-medium">
-                              &quot;{a.item}&quot;
+                              {formatAction(item.action)}
                             </span>
                           </p>
                           <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                            {a.time}
+                            {formatDate(item.createdAt)}
                           </p>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
               </Card>
             </div>
 
@@ -506,6 +515,45 @@ export default function Workspace() {
                 {activeWorkspace?.name}
               </strong>
             </p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Create workspace modal */}
+      <Modal
+        open={createWsOpen}
+        onClose={() => setCreateWsOpen(false)}
+        title="Create New Workspace"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCreateWsOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              loading={creatingWs}
+              onClick={handleCreateWsSubmit(handleCreateWorkspace)}
+            >
+              Create Workspace
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input
+            label="Workspace name"
+            {...registerCreateWs("name", { required: true })}
+            placeholder="e.g. Marketing Team"
+          />
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-[var(--text-primary)]">
+              Description
+            </label>
+            <textarea
+              rows={3}
+              {...registerCreateWs("description")}
+              placeholder="What is this workspace for?"
+              className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
+            />
           </div>
         </div>
       </Modal>
