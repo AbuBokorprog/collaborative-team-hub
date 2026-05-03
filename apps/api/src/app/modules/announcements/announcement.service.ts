@@ -2,10 +2,7 @@ import httpStatus from 'http-status'
 import prisma from '../../helpers/prisma'
 import { AppError } from '../../utils/AppError'
 import { writeAuditLog } from '../../helpers/auditLog'
-import {
-  notifyMentions,
-  resolveMentionUserIds,
-} from '../../helpers/mentions'
+import { notifyMentions, resolveMentionUserIds } from '../../helpers/mentions'
 import { calculatePagination } from '../../helpers/pagination'
 
 const assertMember = async (workspaceId: string, userId: string) => {
@@ -47,6 +44,8 @@ export const list = async (
       take: limit,
       orderBy: [{ pinned: 'desc' }, { createdAt: sortOrder as 'asc' | 'desc' }],
       include: {
+        reactions: true,
+        comments: true,
         author: { select: { id: true, name: true, avatar: true } },
         _count: { select: { comments: true, reactions: true } },
       },
@@ -94,7 +93,10 @@ export const update = async (
   if (!row) throw new AppError(httpStatus.NOT_FOUND, 'Announcement not found')
 
   if (payload.pinned !== undefined && !isAdmin) {
-    throw new AppError(httpStatus.FORBIDDEN, 'Only admins can pin announcements')
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'Only admins can pin announcements',
+    )
   }
 
   const updated = await prisma.announcement.update({
@@ -153,10 +155,16 @@ export const react = async (
   if (!row) throw new AppError(httpStatus.NOT_FOUND, 'Announcement not found')
 
   const existing = await prisma.reaction.findFirst({
-    where: { announcementId, userId, emoji },
+    where: { announcementId, userId },
     include: { user: { select: { id: true, name: true } } },
   })
-  if (existing) return existing
+
+  if (existing) {
+    const deleted = await prisma.reaction.delete({
+      where: { id: existing.id },
+    })
+    return deleted
+  }
 
   return prisma.reaction.create({
     data: {

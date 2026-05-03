@@ -35,10 +35,14 @@ export function registerSockets(io: Server) {
   })
 
   io.on('connection', socket => {
+    const userId = socket.data.userId as string
+    
+    // Join user-specific room for personal notifications
+    void socket.join(`user:${userId}`)
+    
     socket.on('join-workspace', (workspaceId: string) => {
       if (typeof workspaceId !== 'string') return
       void (async () => {
-        const userId = socket.data.userId as string
         const m = await prisma.membership.findUnique({
           where: {
             userId_workspaceId: { userId, workspaceId },
@@ -59,6 +63,27 @@ export function registerSockets(io: Server) {
           userIds: onlineUserIds,
         })
       })()
+    })
+
+    socket.on('leave-workspace', (workspaceId: string) => {
+      if (typeof workspaceId !== 'string') return
+      void socket.leave(`workspace:${workspaceId}`)
+      
+      void io.in(`workspace:${workspaceId}`).emit('online-users', {
+        workspaceId,
+        note: 'member_left',
+      })
+    })
+
+    socket.on('mark-notification-read', (notificationId: string) => {
+      if (typeof notificationId !== 'string') return
+      // Emit to user's other tabs to update UI
+      io.to(`user:${userId}`).emit('notification:read', { notificationId })
+    })
+
+    socket.on('mark-all-notifications-read', () => {
+      // Emit to user's other tabs to update UI
+      io.to(`user:${userId}`).emit('notifications:all-read')
     })
 
     socket.on('disconnecting', () => {

@@ -16,13 +16,16 @@ enum UserStatus {
 
 enum Role {
   ADMIN
+  MANAGER
   MEMBER
 }
 
 enum TaskStatus {
   TODO
   IN_PROGRESS
+  REVIEW
   DONE
+  OVERDUE
 }
 
 enum GoalStatus {
@@ -41,8 +44,14 @@ enum Priority {
 
 enum NotificationType {
   MENTION
-  TASK
+  TASK_ASSIGNED
+  TASK_STATUS_CHANGED
   ANNOUNCEMENT
+  GOAL_COMPLETED
+  WORKSPACE_INVITED
+  PROMOTED_TO_MANAGER
+  REMOVED_FROM_WORKSPACE
+  DEADLINE_REMINDER
   SYSTEM
 }
 
@@ -111,6 +120,7 @@ model Goal {
   description String?
   status      GoalStatus   @default(PLANNED)
   dueDate     DateTime?
+  progress    Int          @default(0)
   ownerId     String
   workspaceId String
   owner       User         @relation("GoalOwner", fields: [ownerId], references: [id])

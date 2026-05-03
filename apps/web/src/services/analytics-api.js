@@ -1,24 +1,44 @@
-import { apiRequest } from "./api-client";
+import { apiRequest, downloadFile } from "./api-client";
+
+const appendFilters = (url, filters = {}) => {
+  const params = new URLSearchParams();
+  if (filters.startDate) params.append('startDate', filters.startDate);
+  if (filters.endDate) params.append('endDate', filters.endDate);
+  const qs = params.toString();
+  return qs ? `${url}?${qs}` : url;
+};
 
 export const analyticsApi = {
-  dashboard(workspaceId) {
-    return apiRequest("/analytics/dashboard", { workspaceId });
+  dashboard(workspaceId, filters = {}) {
+    return apiRequest(appendFilters("/analytics/dashboard", filters), { workspaceId });
   },
 
-  overview(workspaceId) {
-    return apiRequest(`/workspaces/${workspaceId}/analytics/overview`);
+  overview(workspaceId, filters = {}) {
+    return apiRequest(appendFilters(`/workspaces/${workspaceId}/analytics/overview`, filters));
   },
 
-  activity(workspaceId) {
-    return apiRequest(`/workspaces/${workspaceId}/analytics/activity`);
+  activity(workspaceId, filters = {}) {
+    return apiRequest(appendFilters(`/workspaces/${workspaceId}/analytics/activity`, filters));
   },
 
-  taskCompletion(workspaceId) {
-    return apiRequest(`/workspaces/${workspaceId}/analytics/task-completion`);
+  taskCompletion(workspaceId, filters = {}) {
+    return apiRequest(appendFilters(`/workspaces/${workspaceId}/analytics/task-completion`, filters));
   },
 
-  recentActivity(workspaceId) {
-    return apiRequest(`/workspaces/${workspaceId}/analytics/recent-activity`);
+  recentActivity(workspaceId, filters = {}) {
+    return apiRequest(appendFilters(`/workspaces/${workspaceId}/analytics/recent-activity`, filters));
+  },
+
+  exportCsv(workspaceId, filters = {}) {
+    const path = appendFilters(`/workspaces/${workspaceId}/export/csv`, filters);
+    return downloadFile(path, `workspace-${workspaceId}-export.csv`, {
+      headers: { "x-workspace-id": workspaceId }
+    });
+  },
+
+  emailCsv(workspaceId, filters = {}) {
+    const filtersWithEmail = { ...filters, sendEmail: "true" };
+    return apiRequest(appendFilters(`/workspaces/${workspaceId}/export/csv`, filtersWithEmail));
   },
 };
 

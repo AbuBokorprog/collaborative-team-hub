@@ -2,26 +2,30 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
 import Sidebar from "@/components/common/sidebar";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import socketClient from "@/services/socket-client";
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
-  const { authLoading, hydrateSession, isAuthenticated, theme, sidebarOpen } =
-    useAppStore();
+  const {
+    authLoading,
+    hydrateSession,
+    isAuthenticated,
+    theme,
+    sidebarOpen,
+    activeWorkspace,
+  } = useAppStore();
+  const { initializeSocket } = useNotificationStore();
   const [sessionChecked, setSessionChecked] = useState(false);
 
   useEffect(() => {
     let active = true;
-
     hydrateSession().finally(() => {
-      if (active) {
-        setSessionChecked(true);
-      }
+      if (active) setSessionChecked(true);
     });
-
     return () => {
       active = false;
     };
@@ -36,6 +40,24 @@ export default function DashboardLayout({ children }) {
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
+
+  // Initialize socket connection and notification listeners once authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    initializeSocket();
+    return () => {
+      socketClient.disconnect();
+    };
+  }, [isAuthenticated, initializeSocket]);
+
+  // Join/leave workspace room when active workspace changes
+  useEffect(() => {
+    if (!isAuthenticated || !activeWorkspace?.id) return;
+    socketClient.joinWorkspace(activeWorkspace.id);
+    return () => {
+      socketClient.leaveWorkspace(activeWorkspace.id);
+    };
+  }, [isAuthenticated, activeWorkspace?.id]);
 
   if (!sessionChecked || authLoading || !isAuthenticated) {
     return null;

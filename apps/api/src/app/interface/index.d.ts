@@ -7,7 +7,7 @@ declare global {
       workspaceId?: string
       membership?: {
         id: string
-        role: 'ADMIN' | 'MEMBER'
+        role: 'ADMIN' | 'MANAGER' | 'MEMBER'
         workspaceId: string
         userId: string
       }
@@ -19,6 +19,7 @@ export interface AuthJwtPayload extends JwtPayload {
   id: string
   email: string
   name: string
+  role?: string
 }
 
 export interface DecodedToken extends AuthJwtPayload {

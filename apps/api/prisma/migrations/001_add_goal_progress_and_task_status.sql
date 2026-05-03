@@ -1,0 +1,6 @@
+-- AlterEnum
+ALTER TYPE "TaskStatus" ADD VALUE 'REVIEW';
+ALTER TYPE "TaskStatus" ADD VALUE 'OVERDUE';
+
+-- AlterTable
+ALTER TABLE "Goal" ADD COLUMN     "progress" INTEGER NOT NULL DEFAULT 0;

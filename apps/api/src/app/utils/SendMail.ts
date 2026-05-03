@@ -6,9 +6,16 @@ type MailPayload = {
   subject: string
   html: string
   text?: string
+  attachments?: any[]
 }
 
-export const SendMail = async ({ to, subject, html, text }: MailPayload) => {
+export const SendMail = async ({
+  to,
+  subject,
+  html,
+  text,
+  attachments,
+}: MailPayload) => {
   if (!config.mail_user || !config.mail_pass || !config.mail_from) {
     if (config.node_env !== 'production') {
       console.warn(
@@ -27,14 +34,19 @@ export const SendMail = async ({ to, subject, html, text }: MailPayload) => {
       user: config.mail_user,
       pass: config.mail_pass,
     },
+    tls: {
+      rejectUnauthorized: false, // ⚠️ dev only
+    },
   })
+
   await transporter.verify()
-  console.log('SMTP Ready')
+
   await transporter.sendMail({
     from: config.mail_from,
     to,
     subject,
     text,
     html,
+    attachments,
   })
 }

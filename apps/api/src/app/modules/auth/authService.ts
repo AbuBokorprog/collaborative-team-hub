@@ -10,7 +10,7 @@ import { HashPassword } from '../../helpers/HashPassword'
 import { TLogin, TRegister } from './authInterface'
 import { Role } from '../../../generated/prisma/enums'
 import { SendMail } from '../../utils/SendMail'
-import { authEmailTemplates } from './authConstants'
+import { forgotPasswordTemplate, verifyEmailTemplate } from '../../views'
 
 const REFRESH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -26,13 +26,27 @@ const stripUser = (user: {
   avatar: user.avatar,
 })
 
+const resolveHighestRole = async (userId: string): Promise<string> => {
+  const memberships = await prisma.membership.findMany({
+    where: { userId },
+    select: { role: true },
+  })
+  const rank: Record<string, number> = { ADMIN: 3, MANAGER: 2, MEMBER: 1 }
+  return memberships.reduce(
+    (best, m) => ((rank[m.role] ?? 0) > (rank[best] ?? 0) ? m.role : best),
+    'MEMBER',
+  )
+}
+
 const issueTokens = async (user: {
   id: string
   email: string
   name: string
 }) => {
+  const role = await resolveHighestRole(user.id)
+
   const accessToken = await getAccessToken(
-    { id: user.id, email: user.email, name: user.name },
+    { id: user.id, email: user.email, name: user.name, role },
     config.access_token as string,
     config.access_expiresIn as string,
   )
@@ -110,7 +124,7 @@ const register = async (payload: TRegister) => {
   await SendMail({
     to: user.email,
     subject: 'Verify your Team Hub email',
-    html: authEmailTemplates.verifyEmail(user.name, verifyLink),
+    html: verifyEmailTemplate({ name: user.name, verifyLink }),
     text: `Verify your email: ${verifyLink}`,
   })
 
@@ -248,13 +262,16 @@ const forgotPassword = async (email: string) => {
 
   const resetLink = `${config.client_url}/reset-password?token=${resetToken}`
 
-  const data = await SendMail({
-    to: 'abubokoras143@gmail.com',
+  await SendMail({
+    to: isExistUser.email,
     subject: 'Reset your Team Hub password',
-    html: authEmailTemplates.resetPassword(isExistUser.name, resetLink),
+    html: forgotPasswordTemplate({
+      name: isExistUser.name,
+      resetLink,
+    }),
     text: `Reset your password: ${resetLink}`,
   })
-  console.log('data', data)
+
   return { email: isExistUser.email }
 }
 
@@ -363,6 +380,7 @@ const me = async (userId: string) => {
       status: true,
       createdAt: true,
       updatedAt: true,
+      memberships: { select: { role: true, workspaceId: true } },
     },
   })
   return user

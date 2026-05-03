@@ -8,15 +8,41 @@ const escapeCsv = (value: string | number | null | undefined) => {
   return text
 }
 
-export const buildWorkspaceCsv = async (workspaceId: string) => {
+export interface ExportOptions {
+  startDate?: string
+  endDate?: string
+  userId?: string
+  role?: string
+}
+
+export const buildWorkspaceCsv = async (workspaceId: string, options: ExportOptions = {}) => {
+  const { startDate, endDate, userId, role } = options
+
+  const dateFilter: any = {}
+  if (startDate) dateFilter.gte = new Date(startDate)
+  if (endDate) dateFilter.lte = new Date(endDate)
+
+  const taskFilter: any = { workspaceId }
+  const goalFilter: any = { workspaceId }
+  
+  if (Object.keys(dateFilter).length > 0) {
+    taskFilter.createdAt = dateFilter
+    goalFilter.createdAt = dateFilter
+  }
+
+  if (role === 'MEMBER' && userId) {
+    taskFilter.assigneeId = userId
+    goalFilter.ownerId = userId
+  }
+
   const [workspace, goals, tasks, members] = await Promise.all([
     prisma.workspace.findUnique({ where: { id: workspaceId } }),
     prisma.goal.findMany({
-      where: { workspaceId },
+      where: goalFilter,
       include: { owner: { select: { email: true, name: true } } },
     }),
     prisma.task.findMany({
-      where: { workspaceId },
+      where: taskFilter,
       include: {
         assignee: { select: { email: true } },
         goal: { select: { title: true } },

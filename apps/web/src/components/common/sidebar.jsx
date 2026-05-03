@@ -5,7 +5,6 @@ import {
   Target,
   CheckSquare,
   Megaphone,
-  BarChart2,
   ChevronDown,
   Plus,
   Settings,
@@ -19,12 +18,10 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-
 import { Avatar } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Input } from "../ui/Input";
 import { Modal } from "./modal";
-
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -34,7 +31,6 @@ const NAV_ITEMS = [
   { href: "/dashboard/goals", icon: Target, label: "Goals" },
   { href: "/dashboard/tasks", icon: CheckSquare, label: "Tasks" },
   { href: "/dashboard/announcements", icon: Megaphone, label: "Announcements" },
-  { href: "/dashboard/analytics", icon: BarChart2, label: "Analytics" },
 ];
 
 export default function Sidebar() {
@@ -51,6 +47,7 @@ export default function Sidebar() {
     logout,
     users,
   } = useAppStore();
+
   const { createWorkspace } = useAppStore();
   const [wsOpen, setWsOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -172,7 +169,10 @@ export default function Sidebar() {
                 ))}
                 <div className="border-t border-white/5 p-1">
                   <button
-                    onClick={() => { setWsOpen(false); setCreateOpen(true); }}
+                    onClick={() => {
+                      setWsOpen(false);
+                      setCreateOpen(true);
+                    }}
                     className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-[var(--sidebar-muted)] hover:text-[var(--sidebar-text)] rounded-lg hover:bg-white/5 transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" /> New Workspace

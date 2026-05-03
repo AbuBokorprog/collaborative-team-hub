@@ -29,7 +29,7 @@ export const requireWorkspaceMember = CatchAsync(async (req, _res, next) => {
   req.workspaceId = workspaceId
   req.membership = {
     id: membership.id,
-    role: membership.role as 'ADMIN' | 'MEMBER',
+    role: membership.role as 'ADMIN' | 'MANAGER' | 'MEMBER',
     workspaceId: membership.workspaceId,
     userId: membership.userId,
   }
@@ -40,6 +40,13 @@ export const requireWorkspaceMember = CatchAsync(async (req, _res, next) => {
 export const requireWorkspaceAdmin = CatchAsync(async (req, _res, next) => {
   if (req.membership?.role !== Role.ADMIN) {
     throw new AppError(httpStatus.FORBIDDEN, 'Admin access required')
+  }
+  next()
+})
+
+export const requireWorkspaceManagerOrAdmin = CatchAsync(async (req, _res, next) => {
+  if (req.membership?.role !== Role.ADMIN && req.membership?.role !== Role.MANAGER) {
+    throw new AppError(httpStatus.FORBIDDEN, 'Admin or Manager access required')
   }
   next()
 })
@@ -72,7 +79,7 @@ export const requireWorkspaceMemberFromParams = CatchAsync(
     req.workspaceId = workspaceId
     req.membership = {
       id: membership.id,
-      role: membership.role as 'ADMIN' | 'MEMBER',
+      role: membership.role as 'ADMIN' | 'MANAGER' | 'MEMBER',
       workspaceId: membership.workspaceId,
       userId: membership.userId,
     }

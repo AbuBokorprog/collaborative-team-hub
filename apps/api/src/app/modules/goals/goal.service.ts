@@ -2,7 +2,7 @@ import httpStatus from 'http-status'
 import prisma from '../../helpers/prisma'
 import { AppError } from '../../utils/AppError'
 import { writeAuditLog } from '../../helpers/auditLog'
-import { GoalStatus } from '../../../generated/prisma/enums'
+import { GoalStatus, TaskStatus } from '../../../generated/prisma/enums'
 import { calculatePagination } from '../../helpers/pagination'
 
 const assertMember = async (workspaceId: string, userId: string) => {
@@ -23,6 +23,64 @@ const getGoalInWorkspace = async (goalId: string, workspaceId: string) => {
     throw new AppError(httpStatus.NOT_FOUND, 'Goal not found')
   }
   return goal
+}
+
+const calculateGoalProgress = async (goalId: string): Promise<number> => {
+  const tasks = await prisma.task.findMany({
+    where: { goalId },
+    select: { status: true },
+  })
+
+  if (tasks.length === 0) return 0
+
+  const completedTasks = tasks.filter(task => task.status === 'DONE').length
+  return Math.round((completedTasks / tasks.length) * 100)
+}
+
+export const updateGoalProgress = async (goalId: string): Promise<void> => {
+  const progress = await calculateGoalProgress(goalId)
+  await prisma.goal.update({
+    where: { id: goalId },
+    data: { progress } as any,
+  })
+}
+
+const getTaskStatusBreakdown = async (goalId: string) => {
+  const tasks = await prisma.task.findMany({
+    where: { goalId },
+    select: { status: true },
+  })
+
+  const breakdown = {
+    total: tasks.length,
+    todo: 0,
+    inProgress: 0,
+    review: 0,
+    done: 0,
+    overdue: 0,
+  }
+
+  tasks.forEach(task => {
+    switch (task.status) {
+      case 'TODO':
+        breakdown.todo++
+        break
+      case 'IN_PROGRESS':
+        breakdown.inProgress++
+        break
+      case 'REVIEW':
+        breakdown.review++
+        break
+      case 'DONE':
+        breakdown.done++
+        break
+      case 'OVERDUE':
+        breakdown.overdue++
+        break
+    }
+  })
+
+  return breakdown
 }
 
 export const listGoals = async (
@@ -99,7 +157,10 @@ export const createGoal = async (
     },
   })
   if (!ownerMembership) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Owner must be a workspace member')
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Owner must be a workspace member',
+    )
   }
 
   return prisma.goal.create({
@@ -159,7 +220,10 @@ export const updateGoal = async (
       },
     })
     if (!om) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'Owner must be a workspace member')
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Owner must be a workspace member',
+      )
     }
   }
 
@@ -167,7 +231,9 @@ export const updateGoal = async (
     where: { id: existing.id },
     data: {
       ...(payload.title !== undefined ? { title: payload.title } : {}),
-      ...(payload.description !== undefined ? { description: payload.description } : {}),
+      ...(payload.description !== undefined
+        ? { description: payload.description }
+        : {}),
       ...(payload.dueDate !== undefined ? { dueDate: payload.dueDate } : {}),
       ...(payload.status !== undefined ? { status: payload.status } : {}),
       ...(payload.ownerId !== undefined ? { ownerId: payload.ownerId } : {}),
@@ -187,6 +253,16 @@ export const updateGoal = async (
       action: 'GOAL_COMPLETED',
       metadata: { goalId },
     })
+
+    // Send goal completion notification to all workspace members
+    const { createGoalCompletedNotification } = await import('../notifications/notification.service')
+    const actor = await prisma.user.findUnique({ where: { id: actorId }, select: { name: true } })
+    await createGoalCompletedNotification(
+      workspaceId,
+      goalId,
+      existing.title,
+      actor?.name || 'Unknown'
+    )
   }
 
   return updated
@@ -299,4 +375,48 @@ export const listGoalActivity = async (
   })
 
   return { updates }
+}
+
+export const getGoalAnalytics = async (
+  goalId: string,
+  workspaceId: string,
+  userId: string,
+) => {
+  await assertMember(workspaceId, userId)
+  const goal = await getGoalInWorkspace(goalId, workspaceId)
+
+  const [taskBreakdown, assignedMembers, recentTasks] = await Promise.all([
+    getTaskStatusBreakdown(goalId),
+    prisma.task.findMany({
+      where: { goalId, assigneeId: { not: null } },
+      select: { assignee: { select: { id: true, name: true, avatar: true } } },
+      distinct: ['assigneeId'],
+    }),
+    prisma.task.findMany({
+      where: { goalId },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        assignee: { select: { id: true, name: true, avatar: true } },
+        updatedAt: true,
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 5,
+    }),
+  ])
+
+  return {
+    goal: {
+      id: goal.id,
+      title: goal.title,
+      status: goal.status,
+      dueDate: goal.dueDate,
+      progress: (goal as any).progress || 0,
+    },
+    taskBreakdown,
+    assignedMembers: assignedMembers.map(t => t.assignee).filter(Boolean),
+    recentTasks,
+    progress: await calculateGoalProgress(goalId),
+  }
 }

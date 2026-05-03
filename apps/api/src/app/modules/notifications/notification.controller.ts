@@ -1,6 +1,7 @@
 import httpStatus from 'http-status'
 import CatchAsync from '../../utils/CatchAsync'
 import SuccessResponse from '../../utils/SuccessResponse'
+import { emitToUser } from '../../helpers/socketEmit'
 import { paramId } from '../../utils/routeParams'
 import * as notificationService from './notification.service'
 
@@ -54,6 +55,9 @@ const readAll = CatchAsync(async (req, res) => {
   const userId = req.user?.id as string
   const data = await notificationService.markAllRead(userId)
 
+  // Emit real-time update to user's other tabs
+  emitToUser(req, userId, 'notifications:all-read', {})
+
   SuccessResponse(res, {
     status: httpStatus.OK,
     success: true,
@@ -89,6 +93,9 @@ const remove = CatchAsync(async (req, res) => {
 const read = CatchAsync(async (req, res) => {
   const userId = req.user?.id as string
   const data = await notificationService.markOneRead(paramId(req.params.id), userId)
+
+  // Emit real-time update to user's other tabs
+  emitToUser(req, userId, 'notification:read', { notificationId: paramId(req.params.id) })
 
   SuccessResponse(res, {
     status: httpStatus.OK,

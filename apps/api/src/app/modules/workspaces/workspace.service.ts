@@ -6,10 +6,8 @@ import { Role } from '../../../generated/prisma/enums'
 import { HashPassword } from '../../helpers/HashPassword'
 import { SendMail } from '../../utils/SendMail'
 import config from '../../config'
-import {
-  authEmailTemplates,
-} from '../auth/authConstants'
 import { createTemporaryPassword } from '../auth/authService'
+import { invitationTemplate } from '../../views'
 
 export const listForUser = async (userId: string) => {
   const rows = await prisma.membership.findMany({
@@ -63,7 +61,10 @@ export const getWorkspace = async (workspaceId: string, userId: string) => {
   })
 
   if (!membership) {
-    throw new AppError(httpStatus.FORBIDDEN, 'Workspace not found or access denied')
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'Workspace not found or access denied',
+    )
   }
 
   return {
@@ -134,6 +135,10 @@ export const inviteMember = async (
     include: { user: true },
   })
 
+  const authority = await prisma.membership.findFirst({
+    where: { userId: actorId },
+  })
+
   await writeAuditLog({
     workspaceId,
     actorId,
@@ -144,12 +149,13 @@ export const inviteMember = async (
   await SendMail({
     to: email,
     subject: `Invitation to ${workspace.name}`,
-    html: authEmailTemplates.invitation(
-      workspace.name,
-      email,
-      temporaryPassword ?? 'Use your existing Team Hub password',
-      `${config.client_url}/login`,
-    ),
+    html: invitationTemplate({
+      teamName: workspace.name,
+      email: email,
+      password: temporaryPassword ?? 'Use your existing Team Hub password',
+      invitedBy: authority?.role ?? 'ADMIN',
+      loginLink: `${config.client_url}/login`,
+    }),
     text: temporaryPassword
       ? `You were invited to ${workspace.name}. Email: ${email}. Temporary password: ${temporaryPassword}. Login: ${config.client_url}/login`
       : `You were invited to ${workspace.name}. Login with your existing Team Hub password: ${config.client_url}/login`,
@@ -194,7 +200,10 @@ export const updateMemberRole = async (
   })
 }
 
-export const removeMember = async (workspaceId: string, targetUserId: string) => {
+export const removeMember = async (
+  workspaceId: string,
+  targetUserId: string,
+) => {
   await prisma.membership.delete({
     where: {
       userId_workspaceId: { userId: targetUserId, workspaceId },

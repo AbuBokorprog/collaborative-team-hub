@@ -1,0 +1,6 @@
+export * from './templates/baseTemplate'
+export * from './templates/forgotPassword'
+export * from './templates/invitation'
+export * from './templates/welcome'
+export * from './templates/sendOtp'
+export * from './templates/verifyEmail'

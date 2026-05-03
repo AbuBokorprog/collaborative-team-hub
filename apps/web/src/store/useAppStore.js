@@ -85,20 +85,10 @@ const goalStatusToApi = {
 };
 
 const toGoalView = (goal) => {
-  const milestones = goal.milestones || [];
-  const progress = milestones.length
-    ? Math.round(
-        milestones.reduce((total, item) => total + item.progressPercentage, 0) /
-          milestones.length,
-      )
-    : goal.status === "COMPLETED"
-      ? 100
-      : 0;
-
   return {
     ...goal,
     status: goalStatusToView[goal.status] || goal.status || "on-track",
-    progress,
+    progress: goal.progress,
     dueDate: goal.dueDate
       ? new Date(goal.dueDate).toLocaleDateString("en-US", {
           month: "short",
@@ -121,326 +111,37 @@ const reactionCounts = (reactions) => {
   }, {});
 };
 
-const toAnnouncementView = (announcement) => ({
-  ...announcement,
-  author: toUserView(announcement.author),
-  reactions: reactionCounts(announcement.reactions),
-  comments: announcement._count?.comments || announcement.comments?.length || 0,
-  audience: "All",
-});
+const toAnnouncementView = (announcement, currentUserId) => {
+  const myReactionObj = announcement.reactions?.find(
+    (r) => r.userId === currentUserId,
+  );
 
-const USERS = [
-  {
-    id: 1,
-    name: "Alex Chen",
-    email: "alex@teamhub.io",
-    role: "Product Lead",
-    avatar: "AC",
-    color: "#5b4fff",
-    online: true,
-  },
-  {
-    id: 2,
-    name: "Sarah Kim",
-    email: "sarah@teamhub.io",
-    role: "Designer",
-    avatar: "SK",
-    color: "#e11d48",
-    online: true,
-  },
-  {
-    id: 3,
-    name: "Marcus Johnson",
-    email: "marcus@teamhub.io",
-    role: "Engineer",
-    avatar: "MJ",
-    color: "#0891b2",
-    online: false,
-  },
-  {
-    id: 4,
-    name: "Priya Patel",
-    email: "priya@teamhub.io",
-    role: "Engineer",
-    avatar: "PP",
-    color: "#16a34a",
-    online: true,
-  },
-  {
-    id: 5,
-    name: "Tom Wright",
-    email: "tom@teamhub.io",
-    role: "Marketing",
-    avatar: "TW",
-    color: "#d97706",
-    online: false,
-  },
-];
-
-const INITIAL_TASKS = {
-  todo: [
-    {
-      id: "t1",
-      title: "Design system audit",
-      priority: "high",
-      assignee: USERS[1],
-      label: "Design",
-      dueDate: "2025-02-15",
-      desc: "Review all components for consistency",
-    },
-    {
-      id: "t2",
-      title: "API rate limiting",
-      priority: "medium",
-      assignee: USERS[2],
-      label: "Backend",
-      dueDate: "2025-02-20",
-      desc: "Implement rate limiting middleware",
-    },
-    {
-      id: "t3",
-      title: "Onboarding flow",
-      priority: "low",
-      assignee: USERS[0],
-      label: "Product",
-      dueDate: "2025-03-01",
-      desc: "Redesign user onboarding experience",
-    },
-  ],
-  inProgress: [
-    {
-      id: "t4",
-      title: "Q1 Dashboard redesign",
-      priority: "high",
-      assignee: USERS[0],
-      label: "Design",
-      dueDate: "2025-02-10",
-      desc: "Overhaul main dashboard metrics",
-    },
-    {
-      id: "t5",
-      title: "Auth 2FA integration",
-      priority: "high",
-      assignee: USERS[3],
-      label: "Security",
-      dueDate: "2025-02-12",
-      desc: "Add TOTP-based 2FA support",
-    },
-    {
-      id: "t6",
-      title: "Mobile responsive fixes",
-      priority: "medium",
-      assignee: USERS[1],
-      label: "Frontend",
-      dueDate: "2025-02-18",
-      desc: "Fix layout issues on small screens",
-    },
-  ],
-  review: [
-    {
-      id: "t7",
-      title: "Payment gateway v2",
-      priority: "high",
-      assignee: USERS[3],
-      label: "Backend",
-      dueDate: "2025-02-08",
-      desc: "Stripe v2 API migration",
-    },
-    {
-      id: "t8",
-      title: "Email templates",
-      priority: "low",
-      assignee: USERS[4],
-      label: "Marketing",
-      dueDate: "2025-02-25",
-      desc: "New transactional email designs",
-    },
-  ],
-  done: [
-    {
-      id: "t9",
-      title: "CI/CD pipeline setup",
-      priority: "medium",
-      assignee: USERS[2],
-      label: "DevOps",
-      dueDate: "2025-02-01",
-      desc: "GitHub Actions deployment pipeline",
-    },
-    {
-      id: "t10",
-      title: "User analytics events",
-      priority: "low",
-      assignee: USERS[0],
-      label: "Product",
-      dueDate: "2025-01-30",
-      desc: "Track key conversion events",
-    },
-  ],
+  return {
+    ...announcement,
+    commentsCount:
+      announcement._count?.comments || announcement.comments?.length || 0,
+    reactionsCount:
+      announcement._count?.reactions || announcement.reactions?.length || 0,
+    reactions: reactionCounts(announcement.reactions),
+    hasReacted: !!myReactionObj,
+    myReaction: myReactionObj?.emoji || null,
+  };
 };
 
-const INITIAL_GOALS = [
-  {
-    id: "g1",
-    title: "Launch v2.0 Platform",
-    description: "Complete platform redesign with new features",
-    progress: 68,
-    target: 100,
-    status: "on-track",
-    dueDate: "Mar 31",
-    team: [USERS[0], USERS[1], USERS[2]],
-    priority: "high",
-  },
-  {
-    id: "g2",
-    title: "Reach 10K Active Users",
-    description: "Growth through product-led acquisition",
-    progress: 42,
-    target: 100,
-    status: "at-risk",
-    dueDate: "Jun 30",
-    team: [USERS[0], USERS[4]],
-    priority: "high",
-  },
-  {
-    id: "g3",
-    title: "99.9% Uptime SLA",
-    description: "Infrastructure reliability improvements",
-    progress: 91,
-    target: 100,
-    status: "on-track",
-    dueDate: "Ongoing",
-    team: [USERS[2], USERS[3]],
-    priority: "medium",
-  },
-  {
-    id: "g4",
-    title: "Security Certifications",
-    description: "SOC2 Type II and ISO 27001",
-    progress: 25,
-    target: 100,
-    status: "behind",
-    dueDate: "Dec 31",
-    team: [USERS[3]],
-    priority: "medium",
-  },
-  {
-    id: "g5",
-    title: "Team Growth to 20 FTEs",
-    description: "Expand engineering and design teams",
-    progress: 60,
-    target: 100,
-    status: "on-track",
-    dueDate: "Sep 30",
-    team: [USERS[0]],
-    priority: "low",
-  },
-];
-
-const INITIAL_ANNOUNCEMENTS = [
-  {
-    id: "a1",
-    title: "🚀 Q1 Planning Week Kickoff",
-    content:
-      "Hey team! Q1 planning starts Monday. Please review the roadmap doc before the all-hands. Bring your biggest ideas — we're setting bold targets this quarter.",
-    author: USERS[0],
-    createdAt: "2025-02-05T09:00:00Z",
-    pinned: true,
-    reactions: { "🎉": 8, "💪": 5, "👀": 3 },
-    comments: 4,
-    audience: "All",
-  },
-  {
-    id: "a2",
-    title: "✨ New Design System Released",
-    content:
-      "Our component library v3 is live! Check Figma for the updated tokens. Engineering team — the npm package is published at @teamhub/ui@3.0.0.",
-    author: USERS[1],
-    createdAt: "2025-02-04T14:30:00Z",
-    pinned: false,
-    reactions: { "🔥": 12, "❤️": 6 },
-    comments: 7,
-    audience: "Engineering",
-  },
-  {
-    id: "a3",
-    title: "🎉 Welcome Marcus to the Team!",
-    content:
-      "Please give a warm welcome to Marcus Johnson, our new Senior Backend Engineer. Marcus comes from Stripe and will be leading our payments infrastructure work.",
-    author: USERS[0],
-    createdAt: "2025-02-03T10:00:00Z",
-    pinned: false,
-    reactions: { "👋": 15, "🎉": 10, "🙌": 8 },
-    comments: 12,
-    audience: "All",
-  },
-];
-
-const WORKSPACES = [
-  { id: "w1", name: "TeamHub HQ", plan: "Pro", members: 5, color: "#5b4fff" },
-  {
-    id: "w2",
-    name: "Client Projects",
-    plan: "Business",
-    members: 12,
-    color: "#e11d48",
-  },
-  {
-    id: "w3",
-    name: "Side Ventures",
-    plan: "Free",
-    members: 3,
-    color: "#16a34a",
-  },
-];
-
-const NOTIFICATIONS = [
-  {
-    id: "n1",
-    type: "mention",
-    text: "Sarah mentioned you in Q1 Dashboard",
-    time: "2m ago",
-    read: false,
-    avatar: USERS[1],
-  },
-  {
-    id: "n2",
-    type: "task",
-    text: "Auth 2FA integration moved to Review",
-    time: "15m ago",
-    read: false,
-    avatar: USERS[3],
-  },
-  {
-    id: "n3",
-    type: "goal",
-    text: 'Q1 goal "10K Users" updated to 42%',
-    time: "1h ago",
-    read: true,
-    avatar: USERS[0],
-  },
-  {
-    id: "n4",
-    type: "comment",
-    text: "Tom commented on Payment gateway v2",
-    time: "3h ago",
-    read: true,
-    avatar: USERS[4],
-  },
-  {
-    id: "n5",
-    type: "announcement",
-    text: "New announcement: Design System v3",
-    time: "1d ago",
-    read: true,
-    avatar: USERS[1],
-  },
-];
+// const toNotificationView = (notification) => ({
+//   ...notification,
+//   text: notification.body || notification.title,
+//   time: notification.createdAt
+//     ? new Date(notification.createdAt).toLocaleString()
+//     : "",
+//   type: notification.type?.toLowerCase?.() || "system",
+// });
 
 export const useAppStore = create(
   persist(
     (set, get) => ({
       // Auth
-      currentUser: USERS[0],
+      currentUser: null,
       isAuthenticated: false,
       authLoading: false,
       authError: "",
@@ -500,9 +201,16 @@ export const useAppStore = create(
 
         try {
           const user = await authApi.me();
+          const activeWorkspaceId = get().activeWorkspace?.id;
+          const membership = user.memberships?.find(
+            (m) => m.workspaceId === activeWorkspaceId,
+          );
           set({
             isAuthenticated: true,
-            currentUser: toUserView(user),
+            currentUser: toUserView({
+              ...user,
+              role: membership?.role || user.role,
+            }),
             authLoading: false,
           });
           await get().loadWorkspaces();
@@ -538,8 +246,8 @@ export const useAppStore = create(
         set((s) => ({ mobileSidebarOpen: !s.mobileSidebarOpen })),
 
       // Workspace
-      workspaces: WORKSPACES,
-      activeWorkspace: WORKSPACES[0],
+      workspaces: null,
+      activeWorkspace: null,
       setActiveWorkspace: (ws) => set({ activeWorkspace: ws }),
       workspaceStats: null,
       workspaceMembers: [],
@@ -548,9 +256,16 @@ export const useAppStore = create(
         try {
           const rows = await workspaceApi.list();
           const workspaces = rows.map(toWorkspaceView);
+
+          const savedWorkspace = get().activeWorkspace;
+
+          const matchedWorkspace = workspaces.find(
+            (w) => w.id === savedWorkspace?.id,
+          );
+
           set({
             workspaces,
-            activeWorkspace: workspaces[0] || null,
+            activeWorkspace: matchedWorkspace || workspaces[0] || null,
           });
           return workspaces;
         } catch (error) {
@@ -568,11 +283,28 @@ export const useAppStore = create(
             workspaceApi.members(workspaceId),
             workspaceApi.stats(workspaceId),
           ]);
+
           const users = members.map((member) =>
             toUserView({ ...member.user, role: member.role }),
           );
 
-          set({ workspaceMembers: members, workspaceStats: stats, users });
+          const currentUserId = get().currentUser?.id;
+          const myMembership = members.find(
+            (m) => (m.user?.id || m.userId) === currentUserId,
+          );
+          set((state) => ({
+            workspaceMembers: members,
+            workspaceStats: stats,
+            users,
+            ...(myMembership
+              ? {
+                  currentUser: {
+                    ...state.currentUser,
+                    role: myMembership.role,
+                  },
+                }
+              : {}),
+          }));
           return { ok: true };
         } catch (error) {
           return {
@@ -607,17 +339,27 @@ export const useAppStore = create(
           set((state) => ({ workspaces: [...state.workspaces, wsView] }));
           return { ok: true, workspace: wsView };
         } catch (error) {
-          return { ok: false, error: error.message || "Unable to create workspace" };
+          return {
+            ok: false,
+            error: error.message || "Unable to create workspace",
+          };
         }
       },
-      loadWorkspaceActivity: async (workspaceId = get().activeWorkspace?.id) => {
-        if (!workspaceId) return;
+      loadWorkspaceActivity: async (
+        workspaceId = get().activeWorkspace?.id,
+      ) => {
+        if (!workspaceId) {
+          return;
+        }
         try {
           const data = await analyticsApi.recentActivity(workspaceId);
           set({ workspaceActivity: Array.isArray(data) ? data : [] });
           return { ok: true };
         } catch (error) {
-          return { ok: false, error: error.message || "Unable to load activity" };
+          return {
+            ok: false,
+            error: error.message || "Unable to load activity",
+          };
         }
       },
       updateWorkspace: async (
@@ -647,10 +389,46 @@ export const useAppStore = create(
       },
 
       // Users
-      users: USERS,
+      users: [],
+      loadUsers: async (workspaceId = get().activeWorkspace?.id) => {
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace selected" };
+        }
+
+        try {
+          const members = await workspaceApi.members(workspaceId);
+
+          const users = members.map((member) =>
+            toUserView({ ...member.user, role: member.role }),
+          );
+
+          const currentUserId = get().currentUser?.id;
+          const myMembership = members.find(
+            (m) => (m.user?.id || m.userId) === currentUserId,
+          );
+          set((state) => ({
+            workspaceMembers: members,
+            users,
+            ...(myMembership
+              ? {
+                  currentUser: {
+                    ...state.currentUser,
+                    role: myMembership.role,
+                  },
+                }
+              : {}),
+          }));
+          return { ok: true };
+        } catch (error) {
+          return {
+            ok: false,
+            error: error.message || "Unable to load users",
+          };
+        }
+      },
 
       // Tasks
-      tasks: INITIAL_TASKS,
+      tasks: [],
       tasksLoading: false,
       tasksError: "",
       taskView: "kanban",
@@ -660,7 +438,13 @@ export const useAppStore = create(
           return;
         }
 
-        set({ tasksLoading: true, tasksError: "" });
+        const members = await workspaceApi.members(workspaceId);
+
+        const users = members.map((member) =>
+          toUserView({ ...member.user, role: member.role }),
+        );
+
+        set({ tasksLoading: true, tasksError: "", users });
 
         try {
           const result = await taskApi.board(workspaceId);
@@ -727,6 +511,7 @@ export const useAppStore = create(
             priority: task.priority,
             dueDate: task.dueDate || undefined,
             goalId: task.goalId || undefined,
+            assigneeId: task.assigneeId || undefined,
             column,
           });
           set((state) => ({
@@ -749,7 +534,9 @@ export const useAppStore = create(
 
       updateTask: async (taskId, col, payload) => {
         const workspaceId = get().activeWorkspace?.id;
-        if (!workspaceId) return { ok: false, error: "No active workspace" };
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace" };
+        }
         try {
           const updated = await taskApi.update(workspaceId, taskId, payload);
           set((state) => ({
@@ -774,7 +561,9 @@ export const useAppStore = create(
             [col]: state.tasks[col].filter((t) => t.id !== taskId),
           },
         }));
-        if (!workspaceId) return { ok: true };
+        if (!workspaceId) {
+          return { ok: true };
+        }
         try {
           await taskApi.remove(workspaceId, taskId);
           return { ok: true };
@@ -785,7 +574,7 @@ export const useAppStore = create(
       },
 
       // Goals
-      goals: INITIAL_GOALS,
+      goals: [],
       goalsLoading: false,
       loadGoals: async (workspaceId = get().activeWorkspace?.id) => {
         if (!workspaceId) {
@@ -804,6 +593,41 @@ export const useAppStore = create(
         } catch (error) {
           set({ goalsLoading: false });
           return { ok: false, error: error.message || "Unable to load goals" };
+        }
+      },
+      updateGoal: async (
+        goalId,
+        payload,
+        workspaceId = get().activeWorkspace?.id,
+      ) => {
+        if (!workspaceId) return { ok: false, error: "No active workspace" };
+        try {
+          const updated = await goalApi.update(workspaceId, goalId, {
+            title: payload.title,
+            description: payload.description,
+            dueDate: payload.dueDate || undefined,
+            status: goalStatusToApi[payload.status] || "ACTIVE",
+          });
+          set((state) => ({
+            goals: state.goals.map((g) =>
+              g.id === goalId ? toGoalView(updated) : g,
+            ),
+          }));
+          return { ok: true };
+        } catch (error) {
+          return { ok: false, error: error.message || "Unable to update goal" };
+        }
+      },
+      deleteGoal: async (goalId, workspaceId = get().activeWorkspace?.id) => {
+        const snapshot = get().goals;
+        set((state) => ({ goals: state.goals.filter((g) => g.id !== goalId) }));
+        if (!workspaceId) return { ok: true };
+        try {
+          await goalApi.delete(workspaceId, goalId);
+          return { ok: true };
+        } catch (error) {
+          set({ goals: snapshot });
+          return { ok: false, error: error.message || "Unable to delete goal" };
         }
       },
       createGoal: async (payload, workspaceId = get().activeWorkspace?.id) => {
@@ -848,21 +672,39 @@ export const useAppStore = create(
       },
 
       // Announcements
-      announcements: INITIAL_ANNOUNCEMENTS,
+      announcements: [],
       announcementsLoading: false,
-      loadAnnouncements: async (workspaceId = get().activeWorkspace?.id) => {
+      announcementMeta: {
+        page: 0,
+        limit: 0,
+        total: 0,
+        totalPages: 0,
+      },
+      loadAnnouncements: async (
+        workspaceId = get().activeWorkspace?.id,
+        currentUserId = get().currentUser?.id,
+        page = 1,
+        limit = 10,
+        search,
+      ) => {
         if (!workspaceId) {
           return;
         }
 
         set({ announcementsLoading: true });
-
+        console.log("page, limit, search", workspaceId, page, limit, search);
         try {
-          const result = await announcementApi.list(workspaceId);
+          const result = await announcementApi.list(
+            workspaceId,
+            page,
+            limit,
+            search,
+          );
           set({
-            announcements: (result.data || result || []).map(
-              toAnnouncementView,
+            announcements: (result.data || []).map((item) =>
+              toAnnouncementView(item, currentUserId),
             ),
+            announcementMeta: result?.meta,
             announcementsLoading: false,
           });
           return { ok: true };
@@ -892,14 +734,105 @@ export const useAppStore = create(
           };
         }
       },
+      updateAnnouncement: async (
+        ann,
+        workspaceId = get().activeWorkspace?.id,
+      ) => {
+        if (!workspaceId) {
+          return {
+            ok: false,
+            error: "No active workspace selected",
+          };
+        }
+
+        const previous = get().announcements;
+
+        // =========================
+        // OPTIMISTIC UPDATE
+        // =========================
+        set((state) => ({
+          announcements: state.announcements.map((item) =>
+            item.id === ann.id
+              ? {
+                  ...item,
+                  ...ann,
+                  updatedAt: new Date().toISOString(),
+                }
+              : item,
+          ),
+        }));
+
+        try {
+          const edited = await announcementApi.edit(workspaceId, ann);
+
+          set((state) => ({
+            announcements: state.announcements.map((item) =>
+              item.id === edited.id ? toAnnouncementView(edited) : item,
+            ),
+          }));
+
+          return { ok: true };
+        } catch (error) {
+          // rollback
+          set({
+            announcements: previous,
+          });
+
+          return {
+            ok: false,
+            error: error.message || "Unable to update announcement",
+          };
+        }
+      },
+      deleteAnnouncement: async (
+        id,
+        workspaceId = get().activeWorkspace?.id,
+      ) => {
+        if (!workspaceId) {
+          return {
+            ok: false,
+            error: "No active workspace selected",
+          };
+        }
+
+        const previous = get().announcements;
+
+        // =========================
+        // OPTIMISTIC DELETE
+        // =========================
+        set((state) => ({
+          announcements: state.announcements.filter((item) => item.id !== id),
+        }));
+
+        try {
+          await announcementApi.delete(workspaceId, id);
+
+          return { ok: true };
+        } catch (error) {
+          // rollback
+          set({
+            announcements: previous,
+          });
+
+          return {
+            ok: false,
+            error: error.message || "Unable to delete announcement",
+          };
+        }
+      },
       announcementComments: {},
       loadAnnouncementComments: async (
         announcementId,
         workspaceId = get().activeWorkspace?.id,
       ) => {
-        if (!workspaceId) return { ok: false, error: "No active workspace" };
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace" };
+        }
         try {
-          const data = await announcementApi.getComments(workspaceId, announcementId);
+          const data = await announcementApi.getComments(
+            workspaceId,
+            announcementId,
+          );
           set((state) => ({
             announcementComments: {
               ...state.announcementComments,
@@ -908,7 +841,10 @@ export const useAppStore = create(
           }));
           return { ok: true };
         } catch (error) {
-          return { ok: false, error: error.message || "Unable to load comments" };
+          return {
+            ok: false,
+            error: error.message || "Unable to load comments",
+          };
         }
       },
       commentOnAnnouncement: async (
@@ -916,9 +852,15 @@ export const useAppStore = create(
         body,
         workspaceId = get().activeWorkspace?.id,
       ) => {
-        if (!workspaceId) return { ok: false, error: "No active workspace" };
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace" };
+        }
         try {
-          const comment = await announcementApi.comment(workspaceId, announcementId, body);
+          const comment = await announcementApi.comment(
+            workspaceId,
+            announcementId,
+            body,
+          );
           set((state) => ({
             announcementComments: {
               ...state.announcementComments,
@@ -944,29 +886,80 @@ export const useAppStore = create(
         workspaceId = get().activeWorkspace?.id,
       ) => {
         if (!workspaceId) {
-          return { ok: false, error: "No active workspace selected" };
+          return {
+            ok: false,
+            error: "No active workspace selected",
+          };
         }
 
         try {
-          await announcementApi.react(workspaceId, announcementId, emoji);
           set((state) => ({
             announcements: state.announcements.map((announcement) => {
               if (announcement.id !== announcementId) {
                 return announcement;
               }
 
+              const reactions = {
+                ...(announcement.reactions || {}),
+              };
+
+              const previousReaction = announcement.myReaction || null;
+
+              // ====================================
+              // CASE 1:
+              // same reaction clicked again = remove
+              // ====================================
+              if (previousReaction === emoji) {
+                const nextCount = (reactions[emoji] || 1) - 1;
+
+                if (nextCount <= 0) {
+                  delete reactions[emoji];
+                } else {
+                  reactions[emoji] = nextCount;
+                }
+
+                return {
+                  ...announcement,
+                  reactions,
+                  myReaction: null,
+                  hasReacted: false,
+                };
+              }
+
+              // ====================================
+              // CASE 2:
+              // had old reaction, switching emoji
+              // ====================================
+              if (previousReaction) {
+                const oldCount = (reactions[previousReaction] || 1) - 1;
+
+                if (oldCount <= 0) {
+                  delete reactions[previousReaction];
+                } else {
+                  reactions[previousReaction] = oldCount;
+                }
+              }
+
+              // add new reaction
+              reactions[emoji] = (reactions[emoji] || 0) + 1;
+
               return {
                 ...announcement,
-                reactions: {
-                  ...announcement.reactions,
-                  [emoji]: (announcement.reactions[emoji] || 0) + 1,
-                },
+                reactions,
+                myReaction: emoji,
+                hasReacted: true,
               };
             }),
           }));
+
+          await announcementApi.react(workspaceId, announcementId, emoji);
+
           return { ok: true };
         } catch (error) {
-          return { ok: false, error: error.message || "Unable to react" };
+          return {
+            ok: false,
+            error: error.message || "Unable to react",
+          };
         }
       },
 
@@ -974,7 +967,10 @@ export const useAppStore = create(
       dashboardStats: null,
       dashboardLoading: false,
       taskCompletionChart: null,
-      loadDashboard: async (workspaceId = get().activeWorkspace?.id) => {
+      loadDashboard: async (
+        workspaceId = get().activeWorkspace?.id,
+        options = {},
+      ) => {
         if (!workspaceId) {
           return;
         }
@@ -983,13 +979,14 @@ export const useAppStore = create(
 
         try {
           const [dashboard, overview, taskCompletion] = await Promise.all([
-            analyticsApi.dashboard(workspaceId),
-            analyticsApi.overview(workspaceId),
-            analyticsApi.taskCompletion(workspaceId).catch(() => null),
+            analyticsApi.dashboard(workspaceId, options),
+            analyticsApi.overview(workspaceId, options),
+            analyticsApi.taskCompletion(workspaceId, options).catch(() => null),
           ]);
           set({
             dashboardStats: { dashboard, overview },
-            taskCompletionChart: taskCompletion?.months || null,
+            taskCompletionChart:
+              taskCompletion?.data?.months || taskCompletion?.months || null,
             dashboardLoading: false,
           });
           return { ok: true };
@@ -1003,7 +1000,7 @@ export const useAppStore = create(
       },
 
       // Notifications
-      notifications: NOTIFICATIONS,
+      notifications: [],
       markAllRead: () =>
         set((s) => ({
           notifications: s.notifications.map((n) => ({ ...n, read: true })),
@@ -1022,11 +1019,3 @@ export const useAppStore = create(
     },
   ),
 );
-
-export {
-  USERS,
-  INITIAL_TASKS,
-  INITIAL_GOALS,
-  INITIAL_ANNOUNCEMENTS,
-  WORKSPACES,
-};

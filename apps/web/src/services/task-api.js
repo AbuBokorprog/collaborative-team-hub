@@ -18,11 +18,8 @@ export const taskApi = {
     });
   },
 
-  move(workspaceId, taskId, column) {
-    return apiRequest(`/workspaces/${workspaceId}/tasks/${taskId}/move`, {
-      method: "PATCH",
-      body: { column },
-    });
+  get(workspaceId, taskId) {
+    return apiRequest(`/workspaces/${workspaceId}/tasks/${taskId}`);
   },
 
   update(workspaceId, taskId, payload) {
@@ -35,6 +32,14 @@ export const taskApi = {
   remove(workspaceId, taskId) {
     return apiRequest(`/workspaces/${workspaceId}/tasks/${taskId}`, {
       method: "DELETE",
+    });
+  },
+
+  // Legacy method for backwards compatibility
+  move(workspaceId, taskId, column) {
+    return apiRequest(`/workspaces/${workspaceId}/tasks/${taskId}/move`, {
+      method: "PATCH",
+      body: { column },
     });
   },
 };

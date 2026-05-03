@@ -23,7 +23,6 @@ const eslintConfig = defineConfig([
       "no-console": ["warn", { allow: ["warn", "error"] }],
       "no-debugger": "error",
       eqeqeq: ["error", "always"],
-      curly: ["error", "all"],
       "no-var": "error",
       "prefer-const": "error",
 
@@ -58,7 +57,6 @@ const eslintConfig = defineConfig([
       /**
        * Modern JS / TS Friendly
        */
-      "arrow-body-style": ["error", "as-needed"],
       "prefer-arrow-callback": "error",
 
       /**

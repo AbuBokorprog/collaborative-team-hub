@@ -81,5 +81,33 @@ export async function apiRequest(path, options = {}) {
   return parseResponse(response);
 }
 
+export async function downloadFile(path, filename, options = {}) {
+  const token = getAccessToken();
+  const requestHeaders = {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...options.headers,
+  };
+
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    credentials: "include",
+    headers: requestHeaders,
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to download file");
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename || "download";
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+}
+
 export { ApiError, API_URL };
 

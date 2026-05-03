@@ -8,7 +8,11 @@ import * as goalService from './goal.service'
 const list = CatchAsync(async (req, res) => {
   const workspaceId = req.workspaceId as string
   const userId = req.user?.id as string
-  const data = await goalService.listGoals(workspaceId, userId, req.query as never)
+  const data = await goalService.listGoals(
+    workspaceId,
+    userId,
+    req.query as never,
+  )
 
   SuccessResponse(res, {
     status: httpStatus.OK,
@@ -34,7 +38,11 @@ const create = CatchAsync(async (req, res) => {
 const getOne = CatchAsync(async (req, res) => {
   const workspaceId = req.workspaceId as string
   const userId = req.user?.id as string
-  const data = await goalService.getGoal(paramId(req.params.id), workspaceId, userId)
+  const data = await goalService.getGoal(
+    paramId(req.params.id),
+    workspaceId,
+    userId,
+  )
 
   SuccessResponse(res, {
     status: httpStatus.OK,
@@ -133,6 +141,23 @@ const addUpdate = CatchAsync(async (req, res) => {
   })
 })
 
+const analytics = CatchAsync(async (req, res) => {
+  const workspaceId = req.workspaceId as string
+  const userId = req.user?.id as string
+  const data = await goalService.getGoalAnalytics(
+    paramId(req.params.id),
+    workspaceId,
+    userId,
+  )
+
+  SuccessResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Goal analytics',
+    data,
+  })
+})
+
 export const goalController = {
   list,
   create,
@@ -142,4 +167,5 @@ export const goalController = {
   createMilestone,
   activity,
   addUpdate,
+  analytics,
 }
