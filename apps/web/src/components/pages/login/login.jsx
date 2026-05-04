@@ -20,8 +20,8 @@ export default function Login() {
     register,
   } = useForm({
     defaultValues: {
-      email: "abubokor1066@gmail.com",
-      password: "Test1234",
+      email: "sarah@demo.com",
+      password: "Password123!",
     },
   });
 
