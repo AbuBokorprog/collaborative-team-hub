@@ -232,6 +232,12 @@ export const useAppStore = create(
           workspaces: [],
         });
       },
+      updateCurrentUser: (patch) =>
+        set((s) => ({
+          currentUser: s.currentUser
+            ? toUserView({ ...s.currentUser, ...patch })
+            : s.currentUser,
+        })),
 
       // Theme
       theme: "light",

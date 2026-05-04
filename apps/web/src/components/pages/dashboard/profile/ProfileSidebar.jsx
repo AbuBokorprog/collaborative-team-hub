@@ -1,18 +1,20 @@
-/* eslint-disable no-unused-vars */
 "use client";
 import { Camera, ChevronRight, LogOut } from "lucide-react";
+import Image from "next/image";
 import { useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { PROFILE_TABS } from "./ProfileShared";
 
+const isUrl = (v) => typeof v === "string" && (v.startsWith("http") || v.startsWith("/"));
+
 export default function ProfileSidebar({
   currentUser,
   form,
-  stats,
   activeTab,
   setActiveTab,
   logout,
+  onAvatarChange,
 }) {
   const fileRef = useRef(null);
 
@@ -21,10 +23,18 @@ export default function ProfileSidebar({
       <Card className="text-center">
         <div className="relative inline-block mb-4">
           <div
-            className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl font-bold mx-auto"
+            className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center text-white text-2xl font-bold mx-auto"
             style={{ backgroundColor: currentUser?.color }}
           >
-            {currentUser?.avatar}
+            {isUrl(currentUser?.avatar) ? (
+              <img
+                src={currentUser.avatar}
+                alt={currentUser?.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              currentUser?.avatar
+            )}
           </div>
           <button
             onClick={() => fileRef.current?.click()}
@@ -37,6 +47,11 @@ export default function ProfileSidebar({
             type="file"
             accept="image/*"
             className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onAvatarChange?.(file);
+              e.target.value = "";
+            }}
           />
         </div>
 

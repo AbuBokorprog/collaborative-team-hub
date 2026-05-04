@@ -41,6 +41,12 @@ export default function DashboardLayout({ children }) {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
+  useEffect(() => {
+    if (activeWorkspace?.color) {
+      document.documentElement.style.setProperty("--accent", activeWorkspace.color);
+    }
+  }, [activeWorkspace?.color]);
+
   // Initialize socket connection and notification listeners once authenticated
   useEffect(() => {
     if (!isAuthenticated) return;
