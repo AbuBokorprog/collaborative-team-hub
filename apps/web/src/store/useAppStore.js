@@ -861,7 +861,11 @@ export const useAppStore = create(
           body,
           authorId: currentUser?.id,
           author: currentUser
-            ? { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar }
+            ? {
+                id: currentUser.id,
+                name: currentUser.name,
+                avatar: currentUser.avatar,
+              }
             : null,
           replies: [],
           createdAt: new Date().toISOString(),
@@ -890,8 +894,12 @@ export const useAppStore = create(
           set((state) => ({
             announcementComments: {
               ...state.announcementComments,
-              [announcementId]: (state.announcementComments[announcementId] || []).map(
-                (c) => (c.id === optimisticId ? { ...comment, replies: comment.replies || [] } : c),
+              [announcementId]: (
+                state.announcementComments[announcementId] || []
+              ).map((c) =>
+                c.id === optimisticId
+                  ? { ...comment, replies: comment.replies || [] }
+                  : c,
               ),
             },
           }));
@@ -900,13 +908,16 @@ export const useAppStore = create(
           set((state) => ({
             announcementComments: {
               ...state.announcementComments,
-              [announcementId]: (state.announcementComments[announcementId] || []).filter(
-                (c) => c.id !== optimisticId,
-              ),
+              [announcementId]: (
+                state.announcementComments[announcementId] || []
+              ).filter((c) => c.id !== optimisticId),
             },
             announcements: state.announcements.map((ann) =>
               ann.id === announcementId
-                ? { ...ann, commentsCount: Math.max((ann.commentsCount || 1) - 1, 0) }
+                ? {
+                    ...ann,
+                    commentsCount: Math.max((ann.commentsCount || 1) - 1, 0),
+                  }
                 : ann,
             ),
           }));
@@ -926,17 +937,25 @@ export const useAppStore = create(
         const patchBody = (comments) =>
           comments.map((c) => {
             if (c.id === commentId) return { ...c, body };
-            if (c.replies?.length) return { ...c, replies: patchBody(c.replies) };
+            if (c.replies?.length)
+              return { ...c, replies: patchBody(c.replies) };
             return c;
           });
         set((state) => ({
           announcementComments: {
             ...state.announcementComments,
-            [announcementId]: patchBody(state.announcementComments[announcementId] || []),
+            [announcementId]: patchBody(
+              state.announcementComments[announcementId] || [],
+            ),
           },
         }));
         try {
-          await announcementApi.editComment(workspaceId, announcementId, commentId, body);
+          await announcementApi.editComment(
+            workspaceId,
+            announcementId,
+            commentId,
+            body,
+          );
           return { ok: true };
         } catch (error) {
           set((state) => ({
@@ -945,7 +964,10 @@ export const useAppStore = create(
               [announcementId]: snapshot,
             },
           }));
-          return { ok: false, error: error.message || "Unable to edit comment" };
+          return {
+            ok: false,
+            error: error.message || "Unable to edit comment",
+          };
         }
       },
       deleteComment: async (
@@ -968,16 +990,25 @@ export const useAppStore = create(
         set((state) => ({
           announcementComments: {
             ...state.announcementComments,
-            [announcementId]: removeComment(state.announcementComments[announcementId] || []),
+            [announcementId]: removeComment(
+              state.announcementComments[announcementId] || [],
+            ),
           },
           announcements: state.announcements.map((ann) =>
             ann.id === announcementId
-              ? { ...ann, commentsCount: Math.max((ann.commentsCount || 1) - 1, 0) }
+              ? {
+                  ...ann,
+                  commentsCount: Math.max((ann.commentsCount || 1) - 1, 0),
+                }
               : ann,
           ),
         }));
         try {
-          await announcementApi.deleteComment(workspaceId, announcementId, commentId);
+          await announcementApi.deleteComment(
+            workspaceId,
+            announcementId,
+            commentId,
+          );
           return { ok: true };
         } catch (error) {
           set((state) => ({
@@ -986,7 +1017,10 @@ export const useAppStore = create(
               [announcementId]: snapshot,
             },
           }));
-          return { ok: false, error: error.message || "Unable to delete comment" };
+          return {
+            ok: false,
+            error: error.message || "Unable to delete comment",
+          };
         }
       },
       replyToComment: async (
@@ -1005,7 +1039,11 @@ export const useAppStore = create(
           body,
           authorId: currentUser?.id,
           author: currentUser
-            ? { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar }
+            ? {
+                id: currentUser.id,
+                name: currentUser.name,
+                avatar: currentUser.avatar,
+              }
             : null,
           parentId: commentId,
           createdAt: new Date().toISOString(),
@@ -1014,11 +1052,12 @@ export const useAppStore = create(
         set((state) => ({
           announcementComments: {
             ...state.announcementComments,
-            [announcementId]: (state.announcementComments[announcementId] || []).map(
-              (c) =>
-                c.id === commentId
-                  ? { ...c, replies: [...(c.replies || []), optimistic] }
-                  : c,
+            [announcementId]: (
+              state.announcementComments[announcementId] || []
+            ).map((c) =>
+              c.id === commentId
+                ? { ...c, replies: [...(c.replies || []), optimistic] }
+                : c,
             ),
           },
         }));
@@ -1032,16 +1071,17 @@ export const useAppStore = create(
           set((state) => ({
             announcementComments: {
               ...state.announcementComments,
-              [announcementId]: (state.announcementComments[announcementId] || []).map(
-                (c) =>
-                  c.id === commentId
-                    ? {
-                        ...c,
-                        replies: (c.replies || []).map((r) =>
-                          r.id === optimisticId ? reply : r,
-                        ),
-                      }
-                    : c,
+              [announcementId]: (
+                state.announcementComments[announcementId] || []
+              ).map((c) =>
+                c.id === commentId
+                  ? {
+                      ...c,
+                      replies: (c.replies || []).map((r) =>
+                        r.id === optimisticId ? reply : r,
+                      ),
+                    }
+                  : c,
               ),
             },
           }));
@@ -1050,14 +1090,17 @@ export const useAppStore = create(
           set((state) => ({
             announcementComments: {
               ...state.announcementComments,
-              [announcementId]: (state.announcementComments[announcementId] || []).map(
-                (c) =>
-                  c.id === commentId
-                    ? {
-                        ...c,
-                        replies: (c.replies || []).filter((r) => r.id !== optimisticId),
-                      }
-                    : c,
+              [announcementId]: (
+                state.announcementComments[announcementId] || []
+              ).map((c) =>
+                c.id === commentId
+                  ? {
+                      ...c,
+                      replies: (c.replies || []).filter(
+                        (r) => r.id !== optimisticId,
+                      ),
+                    }
+                  : c,
               ),
             },
           }));
@@ -1179,6 +1222,25 @@ export const useAppStore = create(
           return {
             ok: false,
             error: error.message || "Unable to load dashboard",
+          };
+        }
+      },
+
+      // Team contributions
+      teamContributions: [],
+      loadTeamContributions: async (
+        workspaceId = get().activeWorkspace?.id,
+      ) => {
+        if (!workspaceId) return;
+        try {
+          const result = await analyticsApi.members(workspaceId);
+
+          set({ teamContributions: result?.contributions || result || [] });
+          return { ok: true };
+        } catch (error) {
+          return {
+            ok: false,
+            error: error.message || "Unable to load team contributions",
           };
         }
       },

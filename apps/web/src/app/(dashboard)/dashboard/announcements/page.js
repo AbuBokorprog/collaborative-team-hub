@@ -196,8 +196,6 @@ export default function AnnouncementsPage() {
     return currentUser?.id === ann.authorId || currentUser?.role === "ADMIN";
   };
 
-  /* ---------------------------------- */
-
   return (
     <div className="space-y-6 animate-slide-in" ref={topRef}>
       <Header
@@ -205,20 +203,22 @@ export default function AnnouncementsPage() {
         subtitle={`${announcementMeta?.total || 0} announcements · ${pinned.length} pinned`}
       />
 
-      <ComposeAnnouncement
-        composing={composing}
-        setComposing={setComposing}
-        currentUser={currentUser}
-        register={register}
-        content={content}
-        setValue={setValue}
-        audience={audience}
-        setAudience={setAudience}
-        onPost={handleSubmit(onSubmit)}
-        isSubmitting={isSubmitting}
-        editing={!!editingId}
-        onCancelEdit={resetForm}
-      />
+      {currentUser?.role === "ADMIN" && (
+        <ComposeAnnouncement
+          composing={composing}
+          setComposing={setComposing}
+          currentUser={currentUser}
+          register={register}
+          content={content}
+          setValue={setValue}
+          audience={audience}
+          setAudience={setAudience}
+          onPost={handleSubmit(onSubmit)}
+          isSubmitting={isSubmitting}
+          editing={!!editingId}
+          onCancelEdit={resetForm}
+        />
+      )}
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />

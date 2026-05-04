@@ -29,16 +29,22 @@ export const analyticsApi = {
     return apiRequest(appendFilters(`/workspaces/${workspaceId}/analytics/recent-activity`, filters));
   },
 
+  members(workspaceId, filters = {}) {
+    return apiRequest(appendFilters(`/workspaces/${workspaceId}/analytics/members`, filters));
+  },
+
   exportCsv(workspaceId, filters = {}) {
-    const path = appendFilters(`/workspaces/${workspaceId}/export/csv`, filters);
+    const path = appendFilters(`/export/csv`, filters);
     return downloadFile(path, `workspace-${workspaceId}-export.csv`, {
-      headers: { "x-workspace-id": workspaceId }
+      headers: { "x-workspace-id": workspaceId },
     });
   },
 
   emailCsv(workspaceId, filters = {}) {
     const filtersWithEmail = { ...filters, sendEmail: "true" };
-    return apiRequest(appendFilters(`/workspaces/${workspaceId}/export/csv`, filtersWithEmail));
+    return apiRequest(appendFilters(`/export/csv`, filtersWithEmail), {
+      headers: { "x-workspace-id": workspaceId },
+    });
   },
 };
 
