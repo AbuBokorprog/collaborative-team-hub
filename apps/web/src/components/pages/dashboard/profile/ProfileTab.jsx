@@ -1,33 +1,58 @@
 "use client";
-import { Globe, Link, Code2, AtSign, X, Save, Check, Edit2 } from "lucide-react";
-import { Textarea } from "@/components/common/textArea";
+import { X, Save, Check, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/Input";
 import { Section } from "./ProfileShared";
 
-export default function ProfileTab({ form, update, editMode, setEditMode, saved, handleSave }) {
+export default function ProfileTab({
+  form,
+  update,
+  editMode,
+  setEditMode,
+  saved,
+  handleSave,
+}) {
   return (
     <Card>
       <div className="flex items-center justify-between mb-6">
-        <Section title="Public Profile" description="This information is visible to your team." />
+        <Section
+          title="Public Profile"
+          description="This information is visible to your team."
+        />
         <div className="flex gap-2">
           {editMode ? (
             <>
-              <Button variant="secondary" size="sm" icon={<X className="w-3.5 h-3.5" />} onClick={() => setEditMode(false)}>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<X className="w-3.5 h-3.5" />}
+                onClick={() => setEditMode(false)}
+              >
                 Cancel
               </Button>
               <Button
                 size="sm"
                 loading={saved}
-                icon={saved ? <Check className="w-3.5 h-3.5" /> : <Save className="w-3.5 h-3.5" />}
+                icon={
+                  saved ? (
+                    <Check className="w-3.5 h-3.5" />
+                  ) : (
+                    <Save className="w-3.5 h-3.5" />
+                  )
+                }
                 onClick={handleSave}
               >
                 {saved ? "Saved!" : "Save"}
               </Button>
             </>
           ) : (
-            <Button variant="secondary" size="sm" icon={<Edit2 className="w-3.5 h-3.5" />} onClick={() => setEditMode(true)}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={<Edit2 className="w-3.5 h-3.5" />}
+              onClick={() => setEditMode(true)}
+            >
               Edit
             </Button>
           )}
@@ -36,13 +61,29 @@ export default function ProfileTab({ form, update, editMode, setEditMode, saved,
 
       <div className="space-y-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Full name" value={form.name} onChange={(e) => update("name", e.target.value)} disabled={!editMode} />
-          <Input label="Role / Title" value={form.role} onChange={(e) => update("role", e.target.value)} disabled={!editMode} />
+          <Input
+            label="Full name"
+            value={form.name}
+            onChange={(e) => update("name", e.target.value)}
+            disabled={!editMode}
+          />
+          <Input
+            label="Role / Title"
+            value={form.role}
+            onChange={(e) => update("role", e.target.value)}
+            disabled={!editMode}
+          />
         </div>
 
-        <Input label="Email" type="email" value={form.email} onChange={(e) => update("email", e.target.value)} disabled={!editMode} />
+        <Input
+          label="Email"
+          type="email"
+          value={form.email}
+          onChange={(e) => update("email", e.target.value)}
+          disabled={!editMode}
+        />
 
-        <Textarea
+        {/* <Textarea
           label="Bio"
           value={form.bio}
           onChange={(e) => update("bio", e.target.value)}
@@ -54,7 +95,9 @@ export default function ProfileTab({ form, update, editMode, setEditMode, saved,
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[var(--text-primary)]">Location</label>
+            <label className="text-sm font-medium text-[var(--text-primary)]">
+              Location
+            </label>
             <div className="relative">
               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
               <input
@@ -67,7 +110,9 @@ export default function ProfileTab({ form, update, editMode, setEditMode, saved,
             </div>
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[var(--text-primary)]">Website</label>
+            <label className="text-sm font-medium text-[var(--text-primary)]">
+              Website
+            </label>
             <div className="relative">
               <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
               <input
@@ -79,9 +124,9 @@ export default function ProfileTab({ form, update, editMode, setEditMode, saved,
               />
             </div>
           </div>
-        </div>
+        </div> */}
 
-        <div className="pt-4 border-t border-[var(--border)]">
+        {/* <div className="pt-4 border-t border-[var(--border)]">
           <p className="text-sm font-medium text-[var(--text-primary)] mb-3">Social Links</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -111,7 +156,7 @@ export default function ProfileTab({ form, update, editMode, setEditMode, saved,
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </Card>
   );

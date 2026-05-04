@@ -1,9 +1,8 @@
 "use client";
-import { Sun, Moon, Monitor, Check } from "lucide-react";
+import { Sun, Moon, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Toggle } from "@/components/common/toggle";
 import { cn } from "@/lib/utils";
-import { Section, SettingRow } from "./ProfileShared";
+import { Section } from "./ProfileShared";
 
 const THEMES = [
   {
@@ -18,12 +17,12 @@ const THEMES = [
     icon: <Moon className="w-5 h-5" />,
     preview: "bg-gray-900 border-gray-700",
   },
-  {
-    key: "system",
-    label: "System",
-    icon: <Monitor className="w-5 h-5" />,
-    preview: "bg-gradient-to-r from-white to-gray-900 border-gray-400",
-  },
+  // {
+  //   key: "system",
+  //   label: "System",
+  //   icon: <Monitor className="w-5 h-5" />,
+  //   preview: "bg-gradient-to-r from-white to-gray-900 border-gray-400",
+  // },
 ];
 
 const ACCENT_COLORS = [
@@ -45,7 +44,7 @@ export default function AppearanceTab({ theme, toggleTheme }) {
           title="Theme"
           description="Choose your preferred color scheme."
         />
-        <div className="grid grid-cols-3 gap-3 mt-5">
+        <div className="grid grid-cols-2 gap-3 mt-5">
           {THEMES.map((t) => {
             const isActive =
               theme === t.key ||
@@ -116,7 +115,7 @@ export default function AppearanceTab({ theme, toggleTheme }) {
         </div>
       </Card>
 
-      <Card>
+      {/* <Card>
         <Section title="Sidebar" description="Customize sidebar behavior." />
         <div className="mt-5 space-y-0">
           <SettingRow
@@ -132,7 +131,7 @@ export default function AppearanceTab({ theme, toggleTheme }) {
             <Toggle checked={true} onChange={() => {}} />
           </SettingRow>
         </div>
-      </Card>
+      </Card> */}
 
       {/* <Card>
         <Section title="Display Density" description="Adjust how compact the interface feels." />

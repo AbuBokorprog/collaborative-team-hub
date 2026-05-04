@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Edit2, Lock, Bell, Palette } from "lucide-react";
+import { Edit2, Lock, Palette } from "lucide-react";
 
 export const PROFILE_TABS = [
   { id: "profile", icon: <Edit2 className="w-4 h-4" />, label: "Profile" },
@@ -9,11 +9,11 @@ export const PROFILE_TABS = [
     icon: <Lock className="w-4 h-4" />,
     label: "Account & Security",
   },
-  {
-    id: "notifications",
-    icon: <Bell className="w-4 h-4" />,
-    label: "Notifications",
-  },
+  // {
+  //   id: "notifications",
+  //   icon: <Bell className="w-4 h-4" />,
+  //   label: "Notifications",
+  // },
   {
     id: "appearance",
     icon: <Palette className="w-4 h-4" />,

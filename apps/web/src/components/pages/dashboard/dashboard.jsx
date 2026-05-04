@@ -125,7 +125,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 animate-slide-in">
       <Header
-        title="Smart Dashboard"
+        title="Dashboard"
         subtitle="Team performance, velocity & contribution insights"
       />
 
@@ -218,10 +218,14 @@ export default function Dashboard() {
         />
       </div>
 
-      {activeTab === "overview" && <OverviewTab goals={goals} taskCompletionChart={taskCompletionChart} />}
+      {activeTab === "overview" && (
+        <OverviewTab goals={goals} taskCompletionChart={taskCompletionChart} />
+      )}
       {activeTab === "tasks" && <TasksTab tasks={tasks} />}
       {activeTab === "goals" && <GoalsTab goals={goals} />}
-      {activeTab === "team" && <TeamTab users={users} contributions={teamContributions} />}
+      {activeTab === "team" && (
+        <TeamTab users={users} contributions={teamContributions} />
+      )}
     </div>
   );
 }

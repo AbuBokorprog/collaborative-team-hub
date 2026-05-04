@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 "use client";
 import { Camera, ChevronRight, LogOut } from "lucide-react";
 import { useRef } from "react";
@@ -5,7 +6,14 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { PROFILE_TABS } from "./ProfileShared";
 
-export default function ProfileSidebar({ currentUser, form, stats, activeTab, setActiveTab, logout }) {
+export default function ProfileSidebar({
+  currentUser,
+  form,
+  stats,
+  activeTab,
+  setActiveTab,
+  logout,
+}) {
   const fileRef = useRef(null);
 
   return (
@@ -24,24 +32,33 @@ export default function ProfileSidebar({ currentUser, form, stats, activeTab, se
           >
             <Camera className="w-3.5 h-3.5 text-white" />
           </button>
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+          />
         </div>
 
-        <h3 className="font-semibold text-[var(--text-primary)]">{form.name}</h3>
+        <h3 className="font-semibold text-[var(--text-primary)]">
+          {form.name}
+        </h3>
         <p className="text-sm text-[var(--text-muted)]">{form.role}</p>
         <div className="flex items-center justify-center gap-1.5 mt-1.5">
           <div className="w-2 h-2 rounded-full bg-[var(--success)]" />
-          <span className="text-xs text-[var(--success)] font-medium">Online</span>
+          <span className="text-xs text-[var(--success)] font-medium">
+            Online
+          </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mt-5 pt-4 border-t border-[var(--border)]">
+        {/* <div className="grid grid-cols-2 gap-2 mt-5 pt-4 border-t border-[var(--border)]">
           {stats.map((s) => (
             <div key={s.label} className="rounded-xl p-2.5 text-center" style={{ backgroundColor: s.bg }}>
               <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
               <p className="text-[10px] text-[var(--text-muted)] leading-tight mt-0.5">{s.label}</p>
             </div>
           ))}
-        </div>
+        </div> */}
       </Card>
 
       <Card className="p-2">
@@ -59,7 +76,9 @@ export default function ProfileSidebar({ currentUser, form, stats, activeTab, se
             >
               {tab.icon}
               {tab.label}
-              {activeTab === tab.id && <ChevronRight className="w-3.5 h-3.5 ml-auto" />}
+              {activeTab === tab.id && (
+                <ChevronRight className="w-3.5 h-3.5 ml-auto" />
+              )}
             </button>
           ))}
         </nav>

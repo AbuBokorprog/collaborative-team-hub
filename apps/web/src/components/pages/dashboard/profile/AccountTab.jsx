@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 "use client";
 import { Lock, Trash2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ export default function AccountTab({
 }) {
   return (
     <div className="space-y-5">
-      <Card>
+      {/* <Card>
         <Section title="Account Settings" description="Manage your login credentials and workspace preferences." />
         <div className="mt-5 space-y-0">
           <SettingRow label="Email address" description="Used for login and notifications">
@@ -54,18 +55,25 @@ export default function AccountTab({
             </select>
           </SettingRow>
         </div>
-      </Card>
+      </Card> */}
 
       <Card>
-        <Section title="Password" description="Keep your account secure with a strong password." />
+        <Section
+          title="Password"
+          description="Keep your account secure with a strong password."
+        />
         <div className="mt-5 space-y-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-[var(--text-primary)]">Current password</label>
+            <label className="text-sm font-medium text-[var(--text-primary)]">
+              Current password
+            </label>
             <div className="relative">
               <input
                 type={showPass ? "text" : "password"}
                 value={passwordForm.oldPassword}
-                onChange={(e) => updatePasswordField("oldPassword", e.target.value)}
+                onChange={(e) =>
+                  updatePasswordField("oldPassword", e.target.value)
+                }
                 placeholder="••••••••"
                 className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2.5 pr-10 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
               />
@@ -74,7 +82,11 @@ export default function AccountTab({
                 onClick={() => setShowPass(!showPass)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
               >
-                {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPass ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
           </div>
@@ -83,14 +95,18 @@ export default function AccountTab({
               label="New password"
               type="password"
               value={passwordForm.newPassword}
-              onChange={(e) => updatePasswordField("newPassword", e.target.value)}
+              onChange={(e) =>
+                updatePasswordField("newPassword", e.target.value)
+              }
               placeholder="••••••••"
             />
             <Input
               label="Confirm password"
               type="password"
               value={passwordForm.confirmPassword}
-              onChange={(e) => updatePasswordField("confirmPassword", e.target.value)}
+              onChange={(e) =>
+                updatePasswordField("confirmPassword", e.target.value)
+              }
               placeholder="••••••••"
             />
           </div>
@@ -105,26 +121,55 @@ export default function AccountTab({
         </div>
       </Card>
 
-      <Card>
-        <Section title="Two-Factor Authentication" description="Add an extra layer of security to your account." />
+      {/* <Card>
+        <Section
+          title="Two-Factor Authentication"
+          description="Add an extra layer of security to your account."
+        />
         <div className="mt-5">
-          <SettingRow label="Authenticator app" description="Use an app like 1Password or Google Authenticator">
-            <Button variant="outline" size="sm">Enable 2FA</Button>
+          <SettingRow
+            label="Authenticator app"
+            description="Use an app like 1Password or Google Authenticator"
+          >
+            <Button variant="outline" size="sm">
+              Enable 2FA
+            </Button>
           </SettingRow>
-          <SettingRow label="SMS backup" description="Receive a code via SMS as backup">
-            <Button variant="secondary" size="sm">Add phone</Button>
+          <SettingRow
+            label="SMS backup"
+            description="Receive a code via SMS as backup"
+          >
+            <Button variant="secondary" size="sm">
+              Add phone
+            </Button>
           </SettingRow>
         </div>
-      </Card>
+      </Card> */}
 
       <Card className="border-[var(--danger)]/20">
-        <Section title="Danger Zone" description="Irreversible actions. Proceed with caution." />
+        <Section
+          title="Danger Zone"
+          description="Irreversible actions. Proceed with caution."
+        />
         <div className="mt-5 space-y-0">
-          <SettingRow label="Deactivate account" description="Temporarily disable your account. You can reactivate anytime.">
-            <Button variant="outline" size="sm">Deactivate</Button>
+          <SettingRow
+            label="Deactivate account"
+            description="Temporarily disable your account. You can reactivate anytime."
+          >
+            <Button variant="outline" size="sm">
+              Deactivate
+            </Button>
           </SettingRow>
-          <SettingRow label="Delete account" description="Permanently delete your account and all associated data.">
-            <Button variant="danger" size="sm" icon={<Trash2 className="w-3.5 h-3.5" />} onClick={() => setDeleteOpen(true)}>
+          <SettingRow
+            label="Delete account"
+            description="Permanently delete your account and all associated data."
+          >
+            <Button
+              variant="danger"
+              size="sm"
+              icon={<Trash2 className="w-3.5 h-3.5" />}
+              onClick={() => setDeleteOpen(true)}
+            >
               Delete
             </Button>
           </SettingRow>
