@@ -43,7 +43,9 @@ export function ReplyRow({ reply, currentUser, users, onEdit, onDelete }) {
     <div className="group/reply flex gap-2 min-w-0">
       <Avatar>
         <AvatarImage src={reply?.author?.avatar} />
-        <AvatarFallback>{reply?.author?.name}</AvatarFallback>
+        <AvatarFallback>
+          {reply?.author?.name?.[0]?.toUpperCase()}
+        </AvatarFallback>
       </Avatar>
 
       <div className="flex-1 min-w-0">

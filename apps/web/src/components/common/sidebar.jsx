@@ -234,7 +234,9 @@ export default function Sidebar() {
                   <div className="relative">
                     <Avatar>
                       <AvatarImage src={user?.avatar} />
-                      <AvatarFallback>{user?.name}</AvatarFallback>
+                      <AvatarFallback>
+                        {user?.name?.[0]?.toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
                     <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-[var(--success)] rounded-full border border-[var(--sidebar-bg)]" />
                   </div>
@@ -257,7 +259,9 @@ export default function Sidebar() {
           >
             <Avatar>
               <AvatarImage src={currentUser?.avatar} />
-              <AvatarFallback>{currentUser?.name}</AvatarFallback>
+              <AvatarFallback>
+                {currentUser?.name?.[0]?.toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             {(sidebarOpen || mobileSidebarOpen) && (
               <div className="flex-1 min-w-0">

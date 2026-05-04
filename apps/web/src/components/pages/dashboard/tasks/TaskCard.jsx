@@ -104,7 +104,9 @@ export default function TaskCard({ task, column, onMove, onEdit, onDelete }) {
 
           <Avatar>
             <AvatarImage src={task.assignee?.avatar} />
-            <AvatarFallback>{task.assignee?.name}</AvatarFallback>
+            <AvatarFallback>
+              {task.assignee?.name?.[0]?.toUpperCase()}
+            </AvatarFallback>
           </Avatar>
         </div>
       </div>

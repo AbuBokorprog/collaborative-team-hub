@@ -143,7 +143,9 @@ export function MentionInput({
               >
                 <Avatar>
                   <AvatarImage src={user?.avatar} />
-                  <AvatarFallback>{user?.name}</AvatarFallback>
+                  <AvatarFallback>
+                    {user?.name?.[0]?.toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
                   <div className="font-medium truncate">{user.name}</div>

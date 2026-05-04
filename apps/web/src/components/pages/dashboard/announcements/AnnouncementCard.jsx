@@ -71,7 +71,9 @@ export default function AnnouncementCard({
       <div className="flex items-start gap-3 min-w-0">
         <Avatar>
           <AvatarImage src={ann?.author?.avatar} />
-          <AvatarFallback>{ann?.author?.name}</AvatarFallback>
+          <AvatarFallback>
+            {ann?.author?.name?.[0]?.toUpperCase()}
+          </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">

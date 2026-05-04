@@ -88,7 +88,9 @@ export default function OverviewTab({
                 <div key={item.id} className="flex items-start gap-3">
                   <Avatar>
                     <AvatarImage src={item.actor?.avatar} />
-                    <AvatarFallback>{item.actor?.name}</AvatarFallback>
+                    <AvatarFallback>
+                      {item.actor?.name?.[0]?.toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-[var(--text-primary)]">

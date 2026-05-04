@@ -42,7 +42,9 @@ export default function MembersTab({ users, isAdmin, onInvite }) {
               <div className="relative">
                 <Avatar>
                   <AvatarImage src={user?.avatar} />
-                  <AvatarFallback>{user?.name}</AvatarFallback>
+                  <AvatarFallback>
+                    {user?.name?.[0]?.toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <span
                   className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[var(--surface)] ${user.online ? "bg-[var(--success)]" : "bg-[var(--border-strong)]"}`}

@@ -61,7 +61,9 @@ export function CommentRow({
       <div className="flex gap-2.5 min-w-0">
         <Avatar>
           <AvatarImage src={comment?.author?.avatar} />
-          <AvatarFallback>{comment?.author?.name}</AvatarFallback>
+          <AvatarFallback>
+            {comment?.author?.name?.[0]?.toUpperCase()}
+          </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">

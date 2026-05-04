@@ -25,7 +25,9 @@ export default function ComposeAnnouncement({
         <div className="flex items-center gap-3">
           <Avatar>
             <AvatarImage src={currentUser?.avatar} />
-            <AvatarFallback>{currentUser?.name}</AvatarFallback>
+            <AvatarFallback>
+              {currentUser?.name?.[0]?.toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <button
             onClick={() => setComposing(true)}

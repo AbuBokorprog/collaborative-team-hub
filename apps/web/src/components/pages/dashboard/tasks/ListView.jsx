@@ -48,7 +48,9 @@ export default function ListView({ tasks, onEdit, onDelete }) {
 
                 <Avatar>
                   <AvatarImage src={task?.assignee?.avatar} />
-                  <AvatarFallback>{task?.assignee?.name}</AvatarFallback>
+                  <AvatarFallback>
+                    {task?.assignee?.name?.[0]?.toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <button
                   onClick={() => onEdit(task, task._col)}

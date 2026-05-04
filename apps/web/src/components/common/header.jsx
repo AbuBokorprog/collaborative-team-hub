@@ -223,7 +223,7 @@ export default function Header({ title, subtitle }) {
         <div className="pl-1">
           <Avatar>
             <AvatarImage src={currentUser?.avatar} />
-            <AvatarFallback>{currentUser?.name}</AvatarFallback>
+            <AvatarFallback>{currentUser?.name?.[0]?.toUpperCase()}</AvatarFallback>
           </Avatar>
         </div>
       </div>

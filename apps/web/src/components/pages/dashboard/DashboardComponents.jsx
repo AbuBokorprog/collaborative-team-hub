@@ -114,7 +114,7 @@ export function MemberContributionRow({ member, user, max }) {
     <div className="flex items-center gap-3 py-2">
       <Avatar>
         <AvatarImage src={user?.avatar} />
-        <AvatarFallback>{user?.name}</AvatarFallback>
+        <AvatarFallback>{user?.name?.[0]?.toUpperCase()}</AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1">
