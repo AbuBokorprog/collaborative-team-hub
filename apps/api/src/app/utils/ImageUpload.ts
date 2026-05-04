@@ -34,21 +34,24 @@ export const ImageUpload = (imageName: string, filePath: string) => {
   })
 }
 
-const uploadsDir = path.join(process.cwd(), 'uploads')
-const diskStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true })
-    }
-    cb(null, uploadsDir)
-  },
-  filename: (_req, file, cb) => {
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`
-    cb(null, `${unique}-${file.originalname}`)
-  },
-})
+export const ImageUploadBuffer = (buffer: Buffer, publicId: string) => {
+  return new Promise<UploadApiResponse>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { public_id: publicId.trim().replace(/[^a-zA-Z0-9_-]/g, '_') },
+      (error, result) => {
+        if (error || !result) {
+          reject(error ?? new Error('Upload failed'))
+          return
+        }
+        resolve(result)
+      },
+    )
+    stream.end(buffer)
+  })
+}
 
-export const uploadDisk = multer({ storage: diskStorage })
+const memoryStorage = multer.memoryStorage()
+export const uploadDisk = multer({ storage: memoryStorage })
 
 const cloudinaryStorage =
   config.cloudinary_cloud_name && config.cloudinary_api_key && config.cloudinary_secret_key
@@ -58,5 +61,5 @@ const cloudinaryStorage =
     : null
 
 export const upload = multer({
-  storage: cloudinaryStorage ?? diskStorage,
+  storage: cloudinaryStorage ?? memoryStorage,
 })

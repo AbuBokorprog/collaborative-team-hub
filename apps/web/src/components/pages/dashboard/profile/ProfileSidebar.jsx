@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { PROFILE_TABS } from "./ProfileShared";
 
 const isUrl = (v) =>
-  typeof v === "string" && (v.startsWith("http") || v.startsWith("/"));
+  typeof v === "string" &&
+  (v.startsWith("http") || v.startsWith("/") || v.startsWith("blob:"));
 
 export default function ProfileSidebar({
   currentUser,
@@ -34,6 +35,7 @@ export default function ProfileSidebar({
                 width={80}
                 height={80}
                 className="object-cover"
+                unoptimized={currentUser.avatar.startsWith("blob:")}
               />
             ) : (
               currentUser?.avatar

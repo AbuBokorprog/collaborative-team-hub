@@ -1,7 +1,7 @@
 "use client";
 import { Bell, Sun, Moon, Menu, X, Check, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Avatar } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 import { useNotificationStore } from "@/store/useNotificationStore";
@@ -41,7 +41,8 @@ function formatNotifTime(dateStr) {
 }
 
 export default function Header({ title, subtitle }) {
-  const { currentUser, theme, toggleTheme, toggleMobileSidebar } = useAppStore();
+  const { currentUser, theme, toggleTheme, toggleMobileSidebar } =
+    useAppStore();
   const {
     notifications,
     unreadCount,
@@ -69,9 +70,13 @@ export default function Header({ title, subtitle }) {
 
       {/* Title */}
       <div className="flex-1 min-w-0">
-        <h1 className="text-base font-semibold text-foreground truncate">{title}</h1>
+        <h1 className="text-base font-semibold text-foreground truncate">
+          {title}
+        </h1>
         {subtitle && (
-          <p className="text-xs text-(--text-muted) truncate hidden sm:block">{subtitle}</p>
+          <p className="text-xs text-(--text-muted) truncate hidden sm:block">
+            {subtitle}
+          </p>
         )}
       </div>
 
@@ -103,13 +108,20 @@ export default function Header({ title, subtitle }) {
 
           {notifOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setNotifOpen(false)}
+              />
               <div className="absolute right-0 top-full mt-2 w-80 bg-(--surface) border border-border rounded-2xl shadow-(--shadow-lg) z-50 animate-slide-in overflow-hidden">
                 <div className="flex items-center justify-between p-4 border-b border-border">
                   <div>
-                    <h3 className="font-semibold text-sm text-foreground">Notifications</h3>
+                    <h3 className="font-semibold text-sm text-foreground">
+                      Notifications
+                    </h3>
                     {unreadCount > 0 && (
-                      <p className="text-xs text-(--text-muted)">{unreadCount} unread</p>
+                      <p className="text-xs text-(--text-muted)">
+                        {unreadCount} unread
+                      </p>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -121,7 +133,10 @@ export default function Header({ title, subtitle }) {
                         Mark all read
                       </button>
                     )}
-                    <button onClick={() => setNotifOpen(false)} className="text-(--text-muted)">
+                    <button
+                      onClick={() => setNotifOpen(false)}
+                      className="text-(--text-muted)"
+                    >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -131,7 +146,9 @@ export default function Header({ title, subtitle }) {
                   {notifications.length === 0 && (
                     <div className="p-8 text-center">
                       <p className="text-2xl mb-2">🔔</p>
-                      <p className="text-sm text-(--text-muted)">No notifications yet</p>
+                      <p className="text-sm text-(--text-muted)">
+                        No notifications yet
+                      </p>
                     </div>
                   )}
                   {notifications.map((n) => (
@@ -164,7 +181,10 @@ export default function Header({ title, subtitle }) {
                       <div className="flex items-center gap-1 opacity-0 group-hover/notif:opacity-100 transition-opacity shrink-0">
                         {!n.read && (
                           <button
-                            onClick={(e) => { e.stopPropagation(); markAsRead(n.id); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(n.id);
+                            }}
                             className="p-1 rounded-md hover:bg-(--surface-2) text-accent"
                             title="Mark as read"
                           >
@@ -172,7 +192,10 @@ export default function Header({ title, subtitle }) {
                           </button>
                         )}
                         <button
-                          onClick={(e) => { e.stopPropagation(); deleteNotification(n.id); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteNotification(n.id);
+                          }}
                           className="p-1 rounded-md hover:bg-(--surface-2) text-red-400"
                           title="Delete"
                         >
@@ -198,7 +221,10 @@ export default function Header({ title, subtitle }) {
 
         {/* Avatar */}
         <div className="pl-1">
-          <Avatar user={currentUser} size="sm" showOnline />
+          <Avatar>
+            <AvatarImage src={currentUser?.avatar} />
+            <AvatarFallback>{currentUser?.name}</AvatarFallback>
+          </Avatar>
         </div>
       </div>
     </header>

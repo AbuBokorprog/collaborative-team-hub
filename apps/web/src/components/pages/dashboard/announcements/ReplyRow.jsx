@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { MoreHorizontal, Pencil, Send, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
 import { MentionInput, MentionText } from "./MentionInput";
 
@@ -41,7 +41,10 @@ export function ReplyRow({ reply, currentUser, users, onEdit, onDelete }) {
 
   return (
     <div className="group/reply flex gap-2 min-w-0">
-      <Avatar user={reply.author} size="xs" className="mt-0.5 shrink-0" />
+      <Avatar>
+        <AvatarImage src={reply?.author?.avatar} />
+        <AvatarFallback>{reply?.author?.name}</AvatarFallback>
+      </Avatar>
 
       <div className="flex-1 min-w-0">
         {/* header */}

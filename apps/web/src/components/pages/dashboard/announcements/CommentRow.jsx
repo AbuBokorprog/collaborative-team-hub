@@ -10,13 +10,20 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
 import { MentionInput, MentionText } from "./MentionInput";
 import { CommentInput } from "./CommentInput";
 import { ReplyRow } from "./ReplyRow";
 
-export function CommentRow({ comment, currentUser, users, onEdit, onDelete, onReply }) {
+export function CommentRow({
+  comment,
+  currentUser,
+  users,
+  onEdit,
+  onDelete,
+  onReply,
+}) {
   const [editing, setEditing] = useState(false);
   const [editBody, setEditBody] = useState(comment.body);
   const [showReplyInput, setShowReplyInput] = useState(false);
@@ -52,7 +59,10 @@ export function CommentRow({ comment, currentUser, users, onEdit, onDelete, onRe
   return (
     <div className="group/comment min-w-0">
       <div className="flex gap-2.5 min-w-0">
-        <Avatar user={comment.author} size="sm" className="mt-0.5 shrink-0" />
+        <Avatar>
+          <AvatarImage src={comment?.author?.avatar} />
+          <AvatarFallback>{comment?.author?.name}</AvatarFallback>
+        </Avatar>
 
         <div className="flex-1 min-w-0">
           {/* header row */}

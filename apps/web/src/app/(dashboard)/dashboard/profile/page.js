@@ -48,11 +48,17 @@ export default function ProfilePage() {
   const toggleNotif = (k) => setNotifSettings((s) => ({ ...s, [k]: !s[k] }));
 
   const handleAvatarChange = async (file) => {
+    const previousAvatar = currentUser?.avatar;
+    const localUrl = URL.createObjectURL(file);
+    updateCurrentUser({ avatar: localUrl });
     try {
       const data = await userApi.uploadAvatar(file);
+      URL.revokeObjectURL(localUrl);
       updateCurrentUser({ avatar: data.avatar });
       toast.success("Avatar updated");
     } catch (error) {
+      URL.revokeObjectURL(localUrl);
+      updateCurrentUser({ avatar: previousAvatar });
       toast.error(error.message || "Failed to upload avatar");
     }
   };

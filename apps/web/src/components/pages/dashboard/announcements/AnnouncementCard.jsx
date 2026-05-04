@@ -11,7 +11,7 @@ import {
   Smile,
   Trash2,
 } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
@@ -69,7 +69,10 @@ export default function AnnouncementCard({
       {ann.pinned && <PinnedBanner />}
 
       <div className="flex items-start gap-3 min-w-0">
-        <Avatar user={ann.author} size="md" className="shrink-0 mt-0.5" />
+        <Avatar>
+          <AvatarImage src={ann?.author?.avatar} />
+          <AvatarFallback>{ann?.author?.name}</AvatarFallback>
+        </Avatar>
 
         <div className="flex-1 min-w-0">
           <CardHeader
@@ -77,10 +80,14 @@ export default function AnnouncementCard({
             canManage={canManage}
             showMenu={showMenu}
             setShowMenu={setShowMenu}
-            onEdit={() => { setShowMenu(false); onEdit?.(ann); }}
+            onEdit={() => {
+              setShowMenu(false);
+              onEdit?.(ann);
+            }}
             onDelete={() => {
               setShowMenu(false);
-              if (window.confirm("Delete this announcement?")) onDelete?.(ann.id);
+              if (window.confirm("Delete this announcement?"))
+                onDelete?.(ann.id);
             }}
           />
 
@@ -135,9 +142,13 @@ export default function AnnouncementCard({
               currentUser={currentUser}
               users={users}
               onComment={(body) => commentOnAnnouncement(ann.id, body)}
-              onEditComment={(commentId, body) => editComment(ann.id, commentId, body)}
+              onEditComment={(commentId, body) =>
+                editComment(ann.id, commentId, body)
+              }
               onDeleteComment={(commentId) => deleteComment(ann.id, commentId)}
-              onReply={(commentId, body) => replyToComment(ann.id, commentId, body)}
+              onReply={(commentId, body) =>
+                replyToComment(ann.id, commentId, body)
+              }
             />
           )}
         </div>
@@ -157,7 +168,14 @@ function PinnedBanner() {
   );
 }
 
-function CardHeader({ ann, canManage, showMenu, setShowMenu, onEdit, onDelete }) {
+function CardHeader({
+  ann,
+  canManage,
+  showMenu,
+  setShowMenu,
+  onEdit,
+  onDelete,
+}) {
   return (
     <div className="flex items-start justify-between gap-2 min-w-0">
       <div className="min-w-0">
@@ -195,7 +213,10 @@ function CardHeader({ ann, canManage, showMenu, setShowMenu, onEdit, onDelete })
 
           {showMenu && (
             <>
-              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setShowMenu(false)}
+              />
               <div className="absolute right-0 top-full mt-1 z-20 w-40 rounded-xl border border-border bg-(--surface) shadow-(--shadow) p-1">
                 <button
                   type="button"

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function MentionText({ text = "" }) {
   const parts = text.split(/(@[\w.]+)/g);
@@ -141,7 +141,10 @@ export function MentionInput({
                     : "hover:bg-(--surface-2)"
                 }`}
               >
-                <Avatar user={user} size="xs" />
+                <Avatar>
+                  <AvatarImage src={user?.avatar} />
+                  <AvatarFallback>{user?.name}</AvatarFallback>
+                </Avatar>
                 <div className="min-w-0">
                   <div className="font-medium truncate">{user.name}</div>
                   <div

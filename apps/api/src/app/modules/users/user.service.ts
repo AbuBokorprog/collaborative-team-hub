@@ -1,7 +1,7 @@
 import httpStatus from 'http-status'
 import prisma from '../../helpers/prisma'
 import { AppError } from '../../utils/AppError'
-import { ImageUpload } from '../../utils/ImageUpload'
+import { ImageUploadBuffer } from '../../utils/ImageUpload'
 import { ComparePassword } from '../../helpers/ComparePassword'
 import { HashPassword } from '../../helpers/HashPassword'
 import { UserStatus } from '../../../generated/prisma/enums'
@@ -117,7 +117,8 @@ const contributions = async (userId: string) => {
 }
 
 const uploadAvatar = async (userId: string, file: Express.Multer.File) => {
-  const uploaded = await ImageUpload(file.filename, file.path)
+  const publicId = `avatar_${userId}_${Date.now()}`
+  const uploaded = await ImageUploadBuffer(file.buffer, publicId)
   const url = uploaded.secure_url ?? uploaded.url
 
   return prisma.user.update({

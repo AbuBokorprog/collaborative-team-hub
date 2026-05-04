@@ -18,7 +18,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Avatar } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { Input } from "../ui/Input";
 import { Modal } from "./modal";
@@ -232,7 +232,10 @@ export default function Sidebar() {
                   className="flex items-center gap-2 px-3 py-1.5"
                 >
                   <div className="relative">
-                    <Avatar user={user} size="xs" />
+                    <Avatar>
+                      <AvatarImage src={user?.avatar} />
+                      <AvatarFallback>{user?.name}</AvatarFallback>
+                    </Avatar>
                     <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-[var(--success)] rounded-full border border-[var(--sidebar-bg)]" />
                   </div>
                   <span className="text-xs text-[var(--sidebar-muted)] truncate">
@@ -252,7 +255,10 @@ export default function Sidebar() {
               !sidebarOpen && !mobileSidebarOpen && "justify-center",
             )}
           >
-            <Avatar user={currentUser} size="sm" showOnline />
+            <Avatar>
+              <AvatarImage src={currentUser?.avatar} />
+              <AvatarFallback>{currentUser?.name}</AvatarFallback>
+            </Avatar>
             {(sidebarOpen || mobileSidebarOpen) && (
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-[var(--sidebar-text)] truncate">

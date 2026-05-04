@@ -1,6 +1,6 @@
 "use client";
 import { Plus, Crown, Mail, MoreHorizontal } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,9 +19,15 @@ export default function MembersTab({ users, isAdmin, onInvite }) {
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-[var(--text-muted)]">{users.length} members</p>
+        <p className="text-sm text-[var(--text-muted)]">
+          {users.length} members
+        </p>
         {isAdmin && (
-          <Button size="sm" icon={<Plus className="w-4 h-4" />} onClick={onInvite}>
+          <Button
+            size="sm"
+            icon={<Plus className="w-4 h-4" />}
+            onClick={onInvite}
+          >
             Invite member
           </Button>
         )}
@@ -34,19 +40,28 @@ export default function MembersTab({ users, isAdmin, onInvite }) {
               className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--surface-2)] transition-colors"
             >
               <div className="relative">
-                <Avatar user={user} size="md" />
+                <Avatar>
+                  <AvatarImage src={user?.avatar} />
+                  <AvatarFallback>{user?.name}</AvatarFallback>
+                </Avatar>
                 <span
                   className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[var(--surface)] ${user.online ? "bg-[var(--success)]" : "bg-[var(--border-strong)]"}`}
                 />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="font-medium text-sm text-[var(--text-primary)]">{user.name}</p>
-                  {user.id === 1 && <Crown className="w-3.5 h-3.5 text-[var(--warning)]" />}
+                  <p className="font-medium text-sm text-[var(--text-primary)]">
+                    {user.name}
+                  </p>
+                  {user.id === 1 && (
+                    <Crown className="w-3.5 h-3.5 text-[var(--warning)]" />
+                  )}
                 </div>
                 <p className="text-xs text-[var(--text-muted)]">{user.email}</p>
               </div>
-              <Badge color={ROLE_COLORS[user.role] || "neutral"}>{user.role}</Badge>
+              <Badge color={ROLE_COLORS[user.role] || "neutral"}>
+                {user.role}
+              </Badge>
               {isAdmin && (
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button className="p-1.5 rounded-lg hover:bg-[var(--border)] text-[var(--text-muted)]">

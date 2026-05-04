@@ -1,6 +1,6 @@
 "use client";
 import { Plus } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 // import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -86,7 +86,10 @@ export default function OverviewTab({
             <div className="space-y-3">
               {workspaceActivity.map((item) => (
                 <div key={item.id} className="flex items-start gap-3">
-                  <Avatar user={item.actor} size="sm" />
+                  <Avatar>
+                    <AvatarImage src={item.actor?.avatar} />
+                    <AvatarFallback>{item.actor?.name}</AvatarFallback>
+                  </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-[var(--text-primary)]">
                       <span className="font-medium">
