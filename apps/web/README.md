@@ -1,36 +1,196 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 📦 Apps Overview — Collaborative Team Hub
 
-## Getting Started
+This document provides **app-specific documentation** for each service inside the monorepo.
 
-First, run the development server:
+# 🌐 apps/web — Frontend Application
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Overview
+
+Frontend is a modern **Next.js 16 App Router** application focused on:
+
+- real-time UX
+- clean dashboard UI
+- seamless API integration
+
+Built with:
+
+- Next.js (App Router)
+- JavaScript (no TypeScript)
+- Tailwind CSS
+- Zustand (state management)
+
+---
+
+## 📁 Structure
+
+```id="tpmw6s"
+src/
+
+app/
+  (auth)/
+    login/
+    register/
+
+  (dashboard)/dashboard/
+    analytics/
+    announcements/
+    goals/
+    profile/
+    tasks/
+    workspace/
+
+components/
+  ui/
+  common/
+  pages/
+
+services/
+hooks/
+store/
+utils/
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## 🚀 Running Locally
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash id="oj5w5k"
+cd apps/web
+npm install
+npm dev
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 🌍 Environment Variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env id="cs2qdf"
+NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_SOCKET_URL=http://localhost:5000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## 🔑 Core Features
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Authentication UI
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Login / Register pages
+- Session persistence
+- Auto redirect for protected routes
+
+---
+
+### Dashboard (Main Hub)
+
+- Role-based data visibility
+- Task overview
+- Goal progress
+- Activity feed
+
+---
+
+### Task Management
+
+- Kanban board
+- Drag & drop
+- Live updates
+- Multi-assignee support
+
+---
+
+### Goals Tracking
+
+- Progress visualization
+- Task-based calculation
+- Status tracking
+
+---
+
+### Announcements
+
+- Post updates
+- Reactions
+- Comments
+- Real-time sync
+
+---
+
+### Notifications
+
+- Real-time notifications
+- Unread count
+- Deep linking
+
+---
+
+### Online Presence
+
+- Show active workspace members
+- Live updates via Socket.io
+
+---
+
+## 🔌 API Integration
+
+- Centralized service layer (`/services`)
+- Uses `fetch` or axios wrapper
+- Includes credentials (cookies)
+- Handles 401 with refresh logic
+
+---
+
+## 🧠 State Management (Zustand)
+
+Global state includes:
+
+- current user
+- workspace
+- tasks
+- goals
+- announcements
+- notifications
+
+---
+
+## ⚠️ Limitations
+
+- Large Zustand store (needs modularization)
+- No full offline support
+- Limited accessibility optimizations
+
+---
+
+## 🎨 UI Notes
+
+- Tailwind-based design
+- Reusable UI components
+- Focus on SaaS dashboard experience
+
+# Seeded Data for DEMO
+
+Workspace: Acme Corp
+
+_6 users (all password: Password123!):_
+
+#### Email Role
+
+- sarah@demo.com Admin
+- james@demo.com Manager
+- priya@demo.com Manager
+- alex@demo.com Member
+- emma@demo.com Member
+- tom@demo.com Member
+
+# 🔗 How Both Apps Work Together
+
+```id="a5m2fg"
+Frontend (Next.js)
+        ↓ API calls
+Backend (Express)
+        ↓
+Database (PostgreSQL)
+
+Realtime:
+Frontend ⇄ Socket.io ⇄ Backend
+```

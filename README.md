@@ -175,6 +175,21 @@ http://localhost:3000
 Backend:
 http://localhost:5000
 
+## 7. Seeded Data for DEMO
+
+Workspace: Acme Corp
+
+_6 users (all password: Password123!):_
+
+#### Email Role
+
+- sarah@demo.com Admin
+- james@demo.com Manager
+- priya@demo.com Manager
+- alex@demo.com Member
+- emma@demo.com Member
+- tom@demo.com Member
+
 ---
 
 # 🔐 Authentication Flow
