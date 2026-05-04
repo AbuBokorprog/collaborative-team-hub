@@ -24,7 +24,10 @@ export default function ProfileSidebar({
     <aside className="lg:w-64 shrink-0 space-y-4">
       <Card className="text-center">
         <div className="relative inline-block mb-4">
-          <div className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center text-white text-2xl font-bold mx-auto">
+          <div
+            className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center text-white text-2xl font-bold mx-auto"
+            style={{ backgroundColor: currentUser?.color }}
+          >
             {isUrl(currentUser?.avatar) ? (
               <Image
                 src={currentUser.avatar}
