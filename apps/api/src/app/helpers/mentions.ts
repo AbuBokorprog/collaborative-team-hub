@@ -1,6 +1,9 @@
 import type { Prisma } from '../../generated/prisma/client'
 import prisma from './prisma'
 import { NotificationType } from '../../generated/prisma/enums'
+import { SendMail } from '../utils/SendMail'
+import { mentionNotificationTemplate } from '../views'
+import config from '../config'
 
 const MENTION_RE = /@([\w.-]+)/g
 
@@ -49,6 +52,8 @@ export async function notifyMentions(params: {
   title: string
   body?: string
   meta?: Record<string, unknown>
+  mentionedByName?: string
+  announcementTitle?: string
 }) {
   if (params.mentionedUserIds.length === 0) return
 
@@ -62,4 +67,28 @@ export async function notifyMentions(params: {
       meta: (params.meta ?? {}) as Prisma.InputJsonValue,
     })),
   })
+
+  if (!params.mentionedByName || !params.announcementTitle) return
+
+  const mentionedUsers = await prisma.user.findMany({
+    where: { id: { in: params.mentionedUserIds } },
+    select: { email: true },
+  })
+
+  await Promise.allSettled(
+    mentionedUsers.map(u =>
+      SendMail({
+        to: u.email,
+        subject: `${params.mentionedByName} mentioned you in a comment`,
+        html: mentionNotificationTemplate({
+          mentionedBy: params.mentionedByName!,
+          announcementTitle: params.announcementTitle!,
+          commentBody: params.body ?? '',
+          workspaceUrl: config.client_url
+            ? `${config.client_url}/dashboard/announcements`
+            : undefined,
+        }),
+      }),
+    ),
+  )
 }

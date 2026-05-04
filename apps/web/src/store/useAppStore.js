@@ -692,7 +692,6 @@ export const useAppStore = create(
         }
 
         set({ announcementsLoading: true });
-        console.log("page, limit, search", workspaceId, page, limit, search);
         try {
           const result = await announcementApi.list(
             workspaceId,
@@ -855,6 +854,33 @@ export const useAppStore = create(
         if (!workspaceId) {
           return { ok: false, error: "No active workspace" };
         }
+        const optimisticId = `pending-${Date.now()}`;
+        const currentUser = get().currentUser;
+        const optimistic = {
+          id: optimisticId,
+          body,
+          authorId: currentUser?.id,
+          author: currentUser
+            ? { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar }
+            : null,
+          replies: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        set((state) => ({
+          announcementComments: {
+            ...state.announcementComments,
+            [announcementId]: [
+              ...(state.announcementComments[announcementId] || []),
+              optimistic,
+            ],
+          },
+          announcements: state.announcements.map((ann) =>
+            ann.id === announcementId
+              ? { ...ann, commentsCount: (ann.commentsCount || 0) + 1 }
+              : ann,
+          ),
+        }));
         try {
           const comment = await announcementApi.comment(
             workspaceId,
@@ -864,20 +890,178 @@ export const useAppStore = create(
           set((state) => ({
             announcementComments: {
               ...state.announcementComments,
-              [announcementId]: [
-                ...(state.announcementComments[announcementId] || []),
-                comment,
-              ],
+              [announcementId]: (state.announcementComments[announcementId] || []).map(
+                (c) => (c.id === optimisticId ? { ...comment, replies: comment.replies || [] } : c),
+              ),
+            },
+          }));
+          return { ok: true, comment };
+        } catch (error) {
+          set((state) => ({
+            announcementComments: {
+              ...state.announcementComments,
+              [announcementId]: (state.announcementComments[announcementId] || []).filter(
+                (c) => c.id !== optimisticId,
+              ),
             },
             announcements: state.announcements.map((ann) =>
               ann.id === announcementId
-                ? { ...ann, comments: ann.comments + 1 }
+                ? { ...ann, commentsCount: Math.max((ann.commentsCount || 1) - 1, 0) }
                 : ann,
             ),
           }));
+          return { ok: false, error: error.message || "Unable to add comment" };
+        }
+      },
+      editComment: async (
+        announcementId,
+        commentId,
+        body,
+        workspaceId = get().activeWorkspace?.id,
+      ) => {
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace" };
+        }
+        const snapshot = get().announcementComments[announcementId];
+        const patchBody = (comments) =>
+          comments.map((c) => {
+            if (c.id === commentId) return { ...c, body };
+            if (c.replies?.length) return { ...c, replies: patchBody(c.replies) };
+            return c;
+          });
+        set((state) => ({
+          announcementComments: {
+            ...state.announcementComments,
+            [announcementId]: patchBody(state.announcementComments[announcementId] || []),
+          },
+        }));
+        try {
+          await announcementApi.editComment(workspaceId, announcementId, commentId, body);
           return { ok: true };
         } catch (error) {
-          return { ok: false, error: error.message || "Unable to add comment" };
+          set((state) => ({
+            announcementComments: {
+              ...state.announcementComments,
+              [announcementId]: snapshot,
+            },
+          }));
+          return { ok: false, error: error.message || "Unable to edit comment" };
+        }
+      },
+      deleteComment: async (
+        announcementId,
+        commentId,
+        workspaceId = get().activeWorkspace?.id,
+      ) => {
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace" };
+        }
+        const snapshot = get().announcementComments[announcementId];
+        const removeComment = (comments) =>
+          comments
+            .filter((c) => c.id !== commentId)
+            .map((c) =>
+              c.replies?.length
+                ? { ...c, replies: removeComment(c.replies) }
+                : c,
+            );
+        set((state) => ({
+          announcementComments: {
+            ...state.announcementComments,
+            [announcementId]: removeComment(state.announcementComments[announcementId] || []),
+          },
+          announcements: state.announcements.map((ann) =>
+            ann.id === announcementId
+              ? { ...ann, commentsCount: Math.max((ann.commentsCount || 1) - 1, 0) }
+              : ann,
+          ),
+        }));
+        try {
+          await announcementApi.deleteComment(workspaceId, announcementId, commentId);
+          return { ok: true };
+        } catch (error) {
+          set((state) => ({
+            announcementComments: {
+              ...state.announcementComments,
+              [announcementId]: snapshot,
+            },
+          }));
+          return { ok: false, error: error.message || "Unable to delete comment" };
+        }
+      },
+      replyToComment: async (
+        announcementId,
+        commentId,
+        body,
+        workspaceId = get().activeWorkspace?.id,
+      ) => {
+        if (!workspaceId) {
+          return { ok: false, error: "No active workspace" };
+        }
+        const optimisticId = `pending-reply-${Date.now()}`;
+        const currentUser = get().currentUser;
+        const optimistic = {
+          id: optimisticId,
+          body,
+          authorId: currentUser?.id,
+          author: currentUser
+            ? { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar }
+            : null,
+          parentId: commentId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        set((state) => ({
+          announcementComments: {
+            ...state.announcementComments,
+            [announcementId]: (state.announcementComments[announcementId] || []).map(
+              (c) =>
+                c.id === commentId
+                  ? { ...c, replies: [...(c.replies || []), optimistic] }
+                  : c,
+            ),
+          },
+        }));
+        try {
+          const reply = await announcementApi.reply(
+            workspaceId,
+            announcementId,
+            commentId,
+            body,
+          );
+          set((state) => ({
+            announcementComments: {
+              ...state.announcementComments,
+              [announcementId]: (state.announcementComments[announcementId] || []).map(
+                (c) =>
+                  c.id === commentId
+                    ? {
+                        ...c,
+                        replies: (c.replies || []).map((r) =>
+                          r.id === optimisticId ? reply : r,
+                        ),
+                      }
+                    : c,
+              ),
+            },
+          }));
+          return { ok: true, reply };
+        } catch (error) {
+          set((state) => ({
+            announcementComments: {
+              ...state.announcementComments,
+              [announcementId]: (state.announcementComments[announcementId] || []).map(
+                (c) =>
+                  c.id === commentId
+                    ? {
+                        ...c,
+                        replies: (c.replies || []).filter((r) => r.id !== optimisticId),
+                      }
+                    : c,
+              ),
+            },
+          }));
+          return { ok: false, error: error.message || "Unable to add reply" };
         }
       },
       reactToAnnouncement: async (

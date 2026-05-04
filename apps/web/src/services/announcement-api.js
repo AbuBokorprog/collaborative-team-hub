@@ -73,4 +73,31 @@ export const announcementApi = {
       },
     );
   },
+
+  editComment(workspaceId, announcementId, commentId, body) {
+    return apiRequest(
+      `/workspaces/${workspaceId}/announcements/${announcementId}/comments/${commentId}`,
+      {
+        method: "PATCH",
+        body: { body },
+      },
+    );
+  },
+
+  deleteComment(workspaceId, announcementId, commentId) {
+    return apiRequest(
+      `/workspaces/${workspaceId}/announcements/${announcementId}/comments/${commentId}`,
+      { method: "DELETE" },
+    );
+  },
+
+  reply(workspaceId, announcementId, commentId, body) {
+    return apiRequest(
+      `/workspaces/${workspaceId}/announcements/${announcementId}/comments/${commentId}/replies`,
+      {
+        method: "POST",
+        body: { body },
+      },
+    );
+  },
 };

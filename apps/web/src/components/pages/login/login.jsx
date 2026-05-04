@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { useAppStore } from "@/store/useAppStore";
@@ -21,8 +20,8 @@ export default function Login() {
     register,
   } = useForm({
     defaultValues: {
-      email: "alex@teamhub.io",
-      password: "password123",
+      email: "abubokor1066@gmail.com",
+      password: "Test1234",
     },
   });
 

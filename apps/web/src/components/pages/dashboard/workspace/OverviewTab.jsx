@@ -2,7 +2,7 @@
 import { Plus } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -21,12 +21,20 @@ function formatAction(action) {
   return ACTION_LABELS[action] || action.toLowerCase().replace(/_/g, " ");
 }
 
-export default function OverviewTab({ workspaces, activeWorkspace, workspaceActivity, users, onCreateWorkspace }) {
+export default function OverviewTab({
+  workspaces,
+  activeWorkspace,
+  workspaceActivity,
+  // users,
+  onCreateWorkspace,
+}) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
+    <div className="grid grid-cols-1 gap-6 animate-fade-in">
       <div className="lg:col-span-2 space-y-4">
         <Card>
-          <h3 className="font-semibold text-[var(--text-primary)] mb-4">Active Workspaces</h3>
+          <h3 className="font-semibold text-[var(--text-primary)] mb-4">
+            Active Workspaces
+          </h3>
           <div className="space-y-3">
             {workspaces.map((ws) => (
               <div
@@ -45,10 +53,16 @@ export default function OverviewTab({ workspaces, activeWorkspace, workspaceActi
                   {ws.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm text-[var(--text-primary)]">{ws.name}</p>
-                  <p className="text-xs text-[var(--text-muted)]">{ws.members} members · {ws.plan}</p>
+                  <p className="font-medium text-sm text-[var(--text-primary)]">
+                    {ws.name}
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    {ws.members} members · {ws.plan}
+                  </p>
                 </div>
-                {ws.id === activeWorkspace?.id && <Badge color="accent">Active</Badge>}
+                {ws.id === activeWorkspace?.id && (
+                  <Badge color="accent">Active</Badge>
+                )}
               </div>
             ))}
             <button
@@ -61,9 +75,13 @@ export default function OverviewTab({ workspaces, activeWorkspace, workspaceActi
         </Card>
 
         <Card>
-          <h3 className="font-semibold text-[var(--text-primary)] mb-4">Recent Activity</h3>
+          <h3 className="font-semibold text-[var(--text-primary)] mb-4">
+            Recent Activity
+          </h3>
           {workspaceActivity.length === 0 ? (
-            <p className="text-sm text-[var(--text-muted)] text-center py-4">No recent activity yet</p>
+            <p className="text-sm text-[var(--text-muted)] text-center py-4">
+              No recent activity yet
+            </p>
           ) : (
             <div className="space-y-3">
               {workspaceActivity.map((item) => (
@@ -71,10 +89,16 @@ export default function OverviewTab({ workspaces, activeWorkspace, workspaceActi
                   <Avatar user={item.actor} size="sm" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-[var(--text-primary)]">
-                      <span className="font-medium">{item.actor?.name?.split(" ")[0] ?? "Someone"}</span>{" "}
-                      <span className="text-[var(--text-muted)]">{formatAction(item.action)}</span>
+                      <span className="font-medium">
+                        {item.actor?.name?.split(" ")[0] ?? "Someone"}
+                      </span>{" "}
+                      <span className="text-[var(--text-muted)]">
+                        {formatAction(item.action)}
+                      </span>
                     </p>
-                    <p className="text-xs text-[var(--text-muted)] mt-0.5">{formatDate(item.createdAt)}</p>
+                    <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                      {formatDate(item.createdAt)}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -83,7 +107,7 @@ export default function OverviewTab({ workspaces, activeWorkspace, workspaceActi
         </Card>
       </div>
 
-      <div className="space-y-4">
+      {/* <div className="space-y-4">
         <Card>
           <h3 className="font-semibold text-[var(--text-primary)] mb-4">Plan Details</h3>
           <div className="space-y-3">
@@ -121,7 +145,7 @@ export default function OverviewTab({ workspaces, activeWorkspace, workspaceActi
             ))}
           </div>
         </Card>
-      </div>
+      </div> */}
     </div>
   );
 }

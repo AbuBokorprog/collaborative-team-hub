@@ -102,7 +102,6 @@ const comment = CatchAsync(async (req, res) => {
     workspaceId,
     userId,
     req.body.body,
-    'You were mentioned in a comment',
   )
 
   emitWorkspace(req, 'comment-added', {
@@ -115,6 +114,68 @@ const comment = CatchAsync(async (req, res) => {
     status: httpStatus.CREATED,
     success: true,
     message: 'Comment added',
+    data,
+  })
+})
+
+const editComment = CatchAsync(async (req, res) => {
+  const workspaceId = req.workspaceId as string
+  const userId = req.user?.id as string
+  const data = await announcementService.editComment(
+    req.params.cId as string,
+    workspaceId,
+    userId,
+    req.body.body,
+  )
+
+  SuccessResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Comment updated',
+    data,
+  })
+})
+
+const deleteComment = CatchAsync(async (req, res) => {
+  const workspaceId = req.workspaceId as string
+  const userId = req.user?.id as string
+  const isAdmin = req.membership?.role === 'ADMIN'
+  await announcementService.deleteComment(
+    req.params.cId as string,
+    workspaceId,
+    userId,
+    isAdmin,
+  )
+
+  SuccessResponse(res, {
+    status: httpStatus.OK,
+    success: true,
+    message: 'Comment deleted',
+    data: null,
+  })
+})
+
+const replyToComment = CatchAsync(async (req, res) => {
+  const workspaceId = req.workspaceId as string
+  const userId = req.user?.id as string
+  const data = await announcementService.replyToComment(
+    req.params.cId as string,
+    workspaceId,
+    userId,
+    req.body.body,
+  )
+
+  emitWorkspace(req, 'reply-added', {
+    workspaceId,
+    announcementId: paramId(req.params.id),
+    parentCommentId: req.params.cId,
+    reply: data,
+  })
+
+  SuccessResponse(res, {
+    status: httpStatus.CREATED,
+    success: true,
+    message: 'Reply added',
     data,
   })
 })
@@ -145,5 +206,8 @@ export const announcementController = {
   remove,
   react,
   comment,
+  editComment,
+  deleteComment,
+  replyToComment,
   pin,
 }

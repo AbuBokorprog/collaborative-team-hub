@@ -42,6 +42,20 @@ router.post(
   announcementController.comment,
 )
 
+router.patch(
+  '/:id/comments/:cId',
+  ValidationRequest(announcementValidation.commentSchema),
+  announcementController.editComment,
+)
+
+router.delete('/:id/comments/:cId', announcementController.deleteComment)
+
+router.post(
+  '/:id/comments/:cId/replies',
+  ValidationRequest(announcementValidation.commentSchema),
+  announcementController.replyToComment,
+)
+
 router.post('/:id/pin', requireWorkspaceAdmin, announcementController.pin)
 
 export const announcementRouter = router

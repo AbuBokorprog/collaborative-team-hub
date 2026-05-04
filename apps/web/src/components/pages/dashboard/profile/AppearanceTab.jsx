@@ -6,9 +6,24 @@ import { cn } from "@/lib/utils";
 import { Section, SettingRow } from "./ProfileShared";
 
 const THEMES = [
-  { key: "light", label: "Light", icon: <Sun className="w-5 h-5" />, preview: "bg-white border-gray-200" },
-  { key: "dark", label: "Dark", icon: <Moon className="w-5 h-5" />, preview: "bg-gray-900 border-gray-700" },
-  { key: "system", label: "System", icon: <Monitor className="w-5 h-5" />, preview: "bg-gradient-to-r from-white to-gray-900 border-gray-400" },
+  {
+    key: "light",
+    label: "Light",
+    icon: <Sun className="w-5 h-5" />,
+    preview: "bg-white border-gray-200",
+  },
+  {
+    key: "dark",
+    label: "Dark",
+    icon: <Moon className="w-5 h-5" />,
+    preview: "bg-gray-900 border-gray-700",
+  },
+  {
+    key: "system",
+    label: "System",
+    icon: <Monitor className="w-5 h-5" />,
+    preview: "bg-gradient-to-r from-white to-gray-900 border-gray-400",
+  },
 ];
 
 const ACCENT_COLORS = [
@@ -26,10 +41,15 @@ export default function AppearanceTab({ theme, toggleTheme }) {
   return (
     <div className="space-y-5">
       <Card>
-        <Section title="Theme" description="Choose your preferred color scheme." />
+        <Section
+          title="Theme"
+          description="Choose your preferred color scheme."
+        />
         <div className="grid grid-cols-3 gap-3 mt-5">
           {THEMES.map((t) => {
-            const isActive = theme === t.key || (t.key === "system" && !["light", "dark"].includes(theme));
+            const isActive =
+              theme === t.key ||
+              (t.key === "system" && !["light", "dark"].includes(theme));
             return (
               <button
                 key={t.key}
@@ -41,14 +61,32 @@ export default function AppearanceTab({ theme, toggleTheme }) {
                     : "border-[var(--border)] hover:border-[var(--border-strong)] bg-[var(--surface-2)]",
                 )}
               >
-                <div className={cn("w-full h-14 rounded-xl border", t.preview)} />
-                <div className={cn("w-5 h-5", isActive ? "text-[var(--accent)]" : "text-[var(--text-muted)]")}>
+                <div
+                  className={cn("w-full h-14 rounded-xl border", t.preview)}
+                />
+                <div
+                  className={cn(
+                    "w-5 h-5",
+                    isActive
+                      ? "text-[var(--accent)]"
+                      : "text-[var(--text-muted)]",
+                  )}
+                >
                   {t.icon}
                 </div>
-                <span className={cn("text-sm font-medium", isActive ? "text-[var(--accent)]" : "text-[var(--text-secondary)]")}>
+                <span
+                  className={cn(
+                    "text-sm font-medium",
+                    isActive
+                      ? "text-[var(--accent)]"
+                      : "text-[var(--text-secondary)]",
+                  )}
+                >
                   {t.label}
                 </span>
-                {isActive && <div className="w-2 h-2 rounded-full bg-[var(--accent)]" />}
+                {isActive && (
+                  <div className="w-2 h-2 rounded-full bg-[var(--accent)]" />
+                )}
               </button>
             );
           })}
@@ -56,7 +94,10 @@ export default function AppearanceTab({ theme, toggleTheme }) {
       </Card>
 
       <Card>
-        <Section title="Accent Color" description="Personalize your workspace color." />
+        <Section
+          title="Accent Color"
+          description="Personalize your workspace color."
+        />
         <div className="flex gap-3 mt-5 flex-wrap">
           {ACCENT_COLORS.map((c) => (
             <button
@@ -78,16 +119,22 @@ export default function AppearanceTab({ theme, toggleTheme }) {
       <Card>
         <Section title="Sidebar" description="Customize sidebar behavior." />
         <div className="mt-5 space-y-0">
-          <SettingRow label="Collapse by default" description="Start with a compact sidebar on load">
+          <SettingRow
+            label="Collapse by default"
+            description="Start with a compact sidebar on load"
+          >
             <Toggle checked={false} onChange={() => {}} />
           </SettingRow>
-          <SettingRow label="Show online team members" description="Display online teammates in the sidebar">
+          <SettingRow
+            label="Show online team members"
+            description="Display online teammates in the sidebar"
+          >
             <Toggle checked={true} onChange={() => {}} />
           </SettingRow>
         </div>
       </Card>
 
-      <Card>
+      {/* <Card>
         <Section title="Display Density" description="Adjust how compact the interface feels." />
         <div className="grid grid-cols-3 gap-3 mt-5">
           {["Compact", "Comfortable", "Spacious"].map((d, i) => (
@@ -104,7 +151,7 @@ export default function AppearanceTab({ theme, toggleTheme }) {
             </button>
           ))}
         </div>
-      </Card>
+      </Card> */}
     </div>
   );
 }

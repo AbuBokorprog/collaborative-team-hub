@@ -569,8 +569,15 @@ workspaceNestedRouter.get(
       where: {
         announcementId: id(req),
         announcement: { workspaceId: workspaceId(req) },
+        parentId: null,
       },
-      include: { author: { select: { id: true, name: true, avatar: true } } },
+      include: {
+        author: { select: { id: true, name: true, avatar: true } },
+        replies: {
+          include: { author: { select: { id: true, name: true, avatar: true } } },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
       orderBy: { createdAt: 'asc' },
     })
     SuccessResponse(res, {
@@ -600,21 +607,57 @@ workspaceNestedRouter.post(
   }),
 )
 
+workspaceNestedRouter.patch(
+  '/announcements/:id/comments/:cId',
+  CatchAsync(async (req, res) => {
+    const data = await announcementService.editComment(
+      req.params.cId as string,
+      workspaceId(req),
+      userId(req),
+      req.body.body,
+    )
+    SuccessResponse(res, {
+      status: httpStatus.OK,
+      success: true,
+      message: 'Comment updated',
+      data,
+    })
+  }),
+)
+
 workspaceNestedRouter.delete(
   '/announcements/:id/comments/:cId',
   CatchAsync(async (req, res) => {
-    await prisma.comment.deleteMany({
-      where: {
-        id: req.params.cId as string,
-        announcementId: id(req),
-        announcement: { workspaceId: workspaceId(req) },
-      },
-    })
+    const isAdmin = req.membership?.role === 'ADMIN'
+    await announcementService.deleteComment(
+      req.params.cId as string,
+      workspaceId(req),
+      userId(req),
+      isAdmin,
+    )
     SuccessResponse(res, {
       status: httpStatus.OK,
       success: true,
       message: 'Comment deleted',
       data: null,
+    })
+  }),
+)
+
+workspaceNestedRouter.post(
+  '/announcements/:id/comments/:cId/replies',
+  CatchAsync(async (req, res) => {
+    const data = await announcementService.replyToComment(
+      req.params.cId as string,
+      workspaceId(req),
+      userId(req),
+      req.body.body,
+    )
+    SuccessResponse(res, {
+      status: httpStatus.CREATED,
+      success: true,
+      message: 'Reply added',
+      data,
     })
   }),
 )
