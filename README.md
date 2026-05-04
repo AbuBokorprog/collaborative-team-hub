@@ -1,159 +1,361 @@
-# Turborepo starter
+# 🚀 Collaborative Team Hub
 
-This Turborepo starter is maintained by the Turborepo core team.
+A full-stack, real-time collaboration platform where teams can manage shared goals, track tasks, post announcements, and collaborate efficiently — all inside a single monorepo.
 
-## Using this example
+---
 
-Run the following command:
+# 🧩 Project Overview
 
-```sh
-npx create-turbo@latest
+Collaborative Team Hub is a modern SaaS-style application designed for team productivity and coordination.
+
+### Core Features
+
+- 🔐 Authentication (JWT with httpOnly cookies)
+- 🏢 Workspace-based collaboration
+- 👥 Role-based access (Admin, Manager, Member)
+- 🎯 Goals & task tracking with progress
+- 📢 Announcements with reactions & comments
+- 📊 Smart dashboard analytics (merged analytics view)
+- ⚡ Real-time updates (Socket.io)
+- 🔔 Notification system with deep linking
+- 🟢 Online presence tracking
+- 📁 File uploads (Cloudinary)
+
+---
+
+# 🏗 Monorepo Structure
+
+```
+apps/
+  web/        → Next.js frontend (App Router, JS)
+  api/        → Express backend (TypeScript)
+
+packages/
+  (optional shared packages)
 ```
 
-## What's inside?
+---
 
-This Turborepo includes the following packages/apps:
+# 🛠 Tech Stack
 
-### Apps and Packages
+### Frontend
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- Next.js 14 (App Router)
+- JavaScript
+- Tailwind CSS
+- Zustand
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+### Backend
 
-### Utilities
+- Node.js + Express.js
+- TypeScript
+- Prisma ORM
+- PostgreSQL
 
-This Turborepo has some additional tools already setup for you:
+### Realtime
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+- Socket.io
 
-### Build
+### Auth
 
-To build all apps and packages, run the following command:
+- JWT (access + refresh)
+- Stored in httpOnly cookies
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+### Storage
 
-```sh
-cd my-turborepo
-turbo build
+- Cloudinary
+
+### Deployment
+
+- Vercel (separate services for frontend & backend)
+
+---
+
+# ⚙️ Setup Instructions
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/AbuBokorprog/collaborative-team-hub
+cd collaborative-team-hub
 ```
 
-Without global `turbo`, use your package manager:
+---
 
-```sh
-cd my-turborepo
-npx turbo build
-npm dlx turbo build
-npm exec turbo build
+## 2. Install Dependencies
+
+Using npm (recommended):
+
+```bash
+npm install
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## 3. Setup Environment Variables
 
-```sh
-turbo build --filter=docs
+Create `.env` files in both apps:
+
+### `/apps/api/.env`
+
+```env
+PORT=5000
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DB
+JWT_ACCESS_EXPIRES_IN=
+JWT_ACCESS_SECRET=your_access_secret
+JWT_REFRESH_SECRET=your_refresh_secret
+JWT_REFRESH_EXPIRES_IN=
+COOKIE_SECRET=your_cookie_secret
+CLIENT_URL=http://localhost:3000
+NODE_ENV=
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+MAIL_HOST=
+MAIL_PORT=
+MAIL_USER=
+MAIL_PASS=
+MAIL_FROM=
 ```
 
-Without global `turbo`:
+---
 
-```sh
-npx turbo build --filter=docs
-npm exec turbo build --filter=docs
-npm exec turbo build --filter=docs
+### `/apps/web/.env`
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_SOCKET_URL=http://localhost:5000
 ```
 
-### Develop
+---
 
-To develop all apps and packages, run the following command:
+## 4. Setup Database
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
+```bash
+cd apps/api
+npx prisma migrate dev
+npx prisma generate
 ```
 
-Without global `turbo`, use your package manager:
+(Optional seed)
 
-```sh
-cd my-turborepo
-npx turbo dev
-npm exec turbo dev
-npm exec turbo dev
+```bash
+npx prisma db seed
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+## 5. Run Development Servers
 
-```sh
-turbo dev --filter=web
+From root:
+
+```bash
+pnpm dev
 ```
 
-Without global `turbo`:
+Or separately:
 
-```sh
-npx turbo dev --filter=web
-npm exec turbo dev --filter=web
-npm exec turbo dev --filter=web
+```bash
+# backend
+cd apps/api
+pnpm dev
+
+# frontend
+cd apps/web
+pnpm dev
 ```
 
-### Remote Caching
+---
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+## 6. Open App
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+Frontend:
+http://localhost:3000
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+Backend:
+http://localhost:5000
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+---
 
-```sh
-cd my-turborepo
-turbo login
+# 🔐 Authentication Flow
+
+- Login/Register returns user + sets httpOnly cookies
+- Frontend uses `credentials: include`
+- Auto session restore via `/me`
+- Refresh token used on 401
+- Logout clears cookies
+
+---
+
+# 👥 Role-Based Access System
+
+Each workspace has scoped roles:
+
+| Role    | Permissions                                      |
+| ------- | ------------------------------------------------ |
+| Admin   | Full control, manage members, view all analytics |
+| Manager | Manage tasks/goals, assign members               |
+| Member  | Limited access, personal tasks & analytics       |
+
+---
+
+# ⚡ Advanced Features
+
+## 1. Real-Time Collaboration (Socket.io)
+
+Implemented:
+
+- Live announcements
+- Live task updates
+- Live reactions/comments
+- Online presence (workspace members)
+- Real-time notifications
+
+### How it works:
+
+- Socket authenticated via JWT
+- Users join workspace rooms
+- Events broadcast to relevant users
+- Zustand updates UI instantly
+
+---
+
+## 2. Smart Dashboard Analytics (Merged System)
+
+Instead of separate analytics page:
+
+- Analytics merged into dashboard
+- Role-based data visibility:
+  - Admin → full workspace analytics
+  - Manager → team-level insights
+  - Member → personal stats only
+
+### Features:
+
+- Task completion trends
+- Goal progress
+- Member workload
+- Recent activity
+- Date & range filtering
+- CSV export (filtered data)
+
+---
+
+# 🎯 Goals & Task Progress System
+
+- Each goal contains tasks
+- Progress auto-calculated:
+
+```
+progress = completed_tasks / total_tasks
 ```
 
-Without global `turbo`, use your package manager:
+- Task statuses:
 
-```sh
-cd my-turborepo
-npx turbo login
-npm exec turbo login
-npm exec turbo login
+```
+TODO → IN_PROGRESS → REVIEW → DONE
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+- Supports:
+  - multi-assignee tasks
+  - due dates
+  - priority levels
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+---
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+# 🔔 Notification System
 
-```sh
-turbo link
+Supports:
+
+- task assignment
+- mentions (@user)
+- announcements
+- role changes
+- reminders
+
+### Features:
+
+- Stored in DB
+- Real-time via Socket.io
+- Unread count
+- Mark as read
+- Deep linking to feature
+
+Example:
+
+```
+/dashboard/tasks?id=123
 ```
 
-Without global `turbo`:
+---
 
-```sh
-npx turbo link
-npm exec turbo link
-npm exec turbo link
+# 🌐 Deployment (Railway)
+
+## Services
+
+- `apps/api` → backend service
+- `apps/web` → frontend service
+
+## Important Notes
+
+- Enable CORS with credentials
+- Use production domain in `CLIENT_URL`
+- Cookies must be:
+  - secure: true
+  - sameSite: "none"
+
+---
+
+# ⚠️ Known Limitations
+
+- ❗ No Redis adapter for Socket.io (scaling limitation)
+- ❗ Notifications not batched (can be noisy)
+- ❗ No offline support
+- ❗ Limited role granularity (only 3 roles)
+- ❗ No audit log UI (backend exists but not exposed)
+- ❗ File uploads limited to Cloudinary only
+
+---
+
+# 📌 Future Improvements
+
+- Redis for socket scaling
+- Email notifications
+- Role permission customization
+- Mobile responsiveness improvements
+- Activity timeline UI
+- Pagination & infinite scroll
+- Background jobs (queues)
+
+---
+
+# 🤝 Contribution
+
+- Use conventional commits:
+
+```
+feat: add task assignment
+fix: resolve auth bug
+refactor: clean api service
 ```
 
-## Useful Links
+- Keep PRs small and focused
 
-Learn more about the power of Turborepo:
+---
 
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+# 📄 License
+
+MIT License
+
+---
+
+# 💡 Final Note
+
+This project demonstrates:
+
+- real-world monorepo architecture
+- production-grade backend design
+- scalable frontend integration
+- real-time system design
+
+Perfect for SaaS-level applications.

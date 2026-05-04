@@ -7,6 +7,7 @@ import { Modal } from "@/components/common/modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/Input";
 import { authApi } from "@/services/auth-api";
+import { userApi } from "@/services/user-api";
 import { useAppStore } from "@/store/useAppStore";
 import ProfileSidebar from "@/components/pages/dashboard/profile/ProfileSidebar";
 import ProfileTab from "@/components/pages/dashboard/profile/ProfileTab";
@@ -16,7 +17,7 @@ import AppearanceTab from "@/components/pages/dashboard/profile/AppearanceTab";
 import ActivityTab from "@/components/pages/dashboard/profile/ActivityTab";
 
 export default function ProfilePage() {
-  const { currentUser, theme, toggleTheme, logout } = useAppStore();
+  const { currentUser, theme, toggleTheme, logout, updateCurrentUser, activeWorkspace, updateWorkspace } = useAppStore();
   const [activeTab, setActiveTab] = useState("profile");
   const [editMode, setEditMode] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -46,9 +47,28 @@ export default function ProfilePage() {
   const updatePasswordField = (key, value) => setPasswordForm((f) => ({ ...f, [key]: value }));
   const toggleNotif = (k) => setNotifSettings((s) => ({ ...s, [k]: !s[k] }));
 
+  const handleAvatarChange = async (file) => {
+    try {
+      const data = await userApi.uploadAvatar(file);
+      updateCurrentUser({ avatar: data.avatar });
+      toast.success("Avatar updated");
+    } catch (error) {
+      toast.error(error.message || "Failed to upload avatar");
+    }
+  };
+
   const handleSave = async () => {
     setSaved(true);
-    setTimeout(() => { setSaved(false); setEditMode(false); }, 1500);
+    try {
+      const data = await userApi.updateProfile({ name: form.name, email: form.email });
+      updateCurrentUser({ name: data.name, email: data.email });
+      toast.success("Profile updated");
+    } catch (error) {
+      toast.error(error.message || "Failed to update profile");
+    } finally {
+      setSaved(false);
+      setEditMode(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -100,10 +120,10 @@ export default function ProfilePage() {
         <ProfileSidebar
           currentUser={currentUser}
           form={form}
-          stats={stats}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           logout={logout}
+          onAvatarChange={handleAvatarChange}
         />
 
         <div className="flex-1 min-w-0 space-y-5">
@@ -127,7 +147,12 @@ export default function ProfilePage() {
             <NotificationsTab notifSettings={notifSettings} toggleNotif={toggleNotif} />
           )}
           {activeTab === "appearance" && (
-            <AppearanceTab theme={theme} toggleTheme={toggleTheme} />
+            <AppearanceTab
+              theme={theme}
+              toggleTheme={toggleTheme}
+              accentColor={activeWorkspace?.color}
+              onAccentColorChange={(color) => updateWorkspace({ accentColor: color })}
+            />
           )}
           {activeTab === "activity" && (
             <ActivityTab stats={stats} recentActivity={recentActivity} />

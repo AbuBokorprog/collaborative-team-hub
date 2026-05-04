@@ -36,7 +36,7 @@ const ACCENT_COLORS = [
   { color: "#1a1918", label: "Midnight" },
 ];
 
-export default function AppearanceTab({ theme, toggleTheme }) {
+export default function AppearanceTab({ theme, toggleTheme, accentColor, onAccentColorChange }) {
   return (
     <div className="space-y-5">
       <Card>
@@ -98,20 +98,28 @@ export default function AppearanceTab({ theme, toggleTheme }) {
           description="Personalize your workspace color."
         />
         <div className="flex gap-3 mt-5 flex-wrap">
-          {ACCENT_COLORS.map((c) => (
-            <button
-              key={c.color}
-              title={c.label}
-              className="group relative w-8 h-8 rounded-full border-2 border-transparent hover:border-[var(--border-strong)] transition-all hover:scale-110"
-              style={{ backgroundColor: c.color }}
-            >
-              {c.color === "#5b4fff" && (
-                <span className="absolute inset-0 flex items-center justify-center">
-                  <Check className="w-3.5 h-3.5 text-white" />
-                </span>
-              )}
-            </button>
-          ))}
+          {ACCENT_COLORS.map((c) => {
+            const isActive = (accentColor || "#5b4fff") === c.color;
+            return (
+              <button
+                key={c.color}
+                title={c.label}
+                onClick={() => onAccentColorChange?.(c.color)}
+                className="group relative w-8 h-8 rounded-full border-2 border-transparent hover:border-[var(--border-strong)] transition-all hover:scale-110"
+                style={{
+                  backgroundColor: c.color,
+                  borderColor: isActive ? "white" : undefined,
+                  boxShadow: isActive ? `0 0 0 2px ${c.color}` : undefined,
+                }}
+              >
+                {isActive && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <Check className="w-3.5 h-3.5 text-white" />
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </Card>
 

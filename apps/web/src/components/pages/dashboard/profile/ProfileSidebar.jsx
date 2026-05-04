@@ -6,7 +6,8 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { PROFILE_TABS } from "./ProfileShared";
 
-const isUrl = (v) => typeof v === "string" && (v.startsWith("http") || v.startsWith("/"));
+const isUrl = (v) =>
+  typeof v === "string" && (v.startsWith("http") || v.startsWith("/"));
 
 export default function ProfileSidebar({
   currentUser,
@@ -27,10 +28,12 @@ export default function ProfileSidebar({
             style={{ backgroundColor: currentUser?.color }}
           >
             {isUrl(currentUser?.avatar) ? (
-              <img
+              <Image
                 src={currentUser.avatar}
-                alt={currentUser?.name}
-                className="w-full h-full object-cover"
+                alt={currentUser?.name ?? ""}
+                width={80}
+                height={80}
+                className="object-cover"
               />
             ) : (
               currentUser?.avatar
